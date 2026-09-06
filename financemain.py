@@ -411,3 +411,6 @@ if __name__ == "__main__":
     print("📱 SMS receiver: http://192.168.100.137:5000/sms")
     print("Press Ctrl+C to stop the server")
     app.run(host="0.0.0.0", port=5000, debug=True)
+# --- RENDER DEPLOYMENT ---
+# This runs when gunicorn starts the app (on Render)
+initialize_database()
