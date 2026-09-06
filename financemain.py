@@ -7,18 +7,27 @@ from slack_sdk.errors import SlackApiError
 from datetime import datetime, timedelta
 from datetime import datetime 
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # --- SLACK CREDENTIALS ---
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")  # <-- PASTE YOUR BOT TOKEN HERE
 SLACK_CHANNEL = "#general"
 
-# --- DATABASE ---
+# --- DATABASE CONNECTION (PostgreSQL) ---
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+def get_db_connection():
+    """Connect to PostgreSQL database."""
+    return psycopg2.connect(DATABASE_URL)
+
 def initialize_database():
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
-    cursor.execute('''
+    """Create tables if they don't exist."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
     CREATE TABLE IF NOT EXISTS transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         date TEXT NOT NULL,
         time TEXT NOT NULL,
         amount REAL NOT NULL,
@@ -26,9 +35,10 @@ def initialize_database():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
-    connection.commit()
-    connection.close()
-    print("✅ Database ready")
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("✅ Database ready (PostgreSQL)")   # <-- Now it says PostgreSQL
 
 # --- SMS PARSER ---
 def parse_sms(text):
@@ -103,6 +113,7 @@ def parse_sms(text):
         "merchant": merchant,
         "type": transaction_type
     }
+
 def convert_date_to_iso(date_str):
     """
     Convert DD-Mon-YYYY to YYYY-MM-DD
@@ -122,11 +133,12 @@ app = Flask(__name__)
 @app.route("/clear")
 def clear_data():
     """Delete all transactions from the database."""
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
-    cursor.execute('DELETE FROM transactions')
-    connection.commit()
-    connection.close()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM transactions')
+    conn.commit()
+    cur.close()
+    conn.close()
     return "✅ All transactions deleted!"
 
 @app.route("/api/spending")
@@ -141,21 +153,22 @@ def api_spending():
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
     # Connect to the database
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
     
     # Query: sum amounts by category, only recent transactions
-    cursor.execute("""
+    cur.execute("""
         SELECT category, SUM(amount) as total
         FROM transactions
         WHERE category IS NOT NULL
-        AND date >= ?
+        AND date >= %s
         GROUP BY category
         ORDER BY total DESC
     """, (cutoff_str,))
     
-    rows = cursor.fetchall()
-    connection.close()
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
     
     # Calculate total spending
     total_spent = sum([row[1] for row in rows])
@@ -224,15 +237,16 @@ def handle_sms():
         return "Could not parse SMS", 400  # <-- MUST HAVE THIS RETURN
     
     # Save to database
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
-    cursor.execute('''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
     INSERT INTO transactions (date, time, amount, category)
-    VALUES (?, ?, ?, ?)
+    VALUES (%s, %s, %s, %s) RETURNING id
     ''', (data["date"], data["time"], data["amount"], None))
-    connection.commit()
-    transaction_id = cursor.lastrowid
-    connection.close()
+    transaction_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
     
     print(f"✅ Saved: Rs {data['amount']} on {data['date']} at {data['time']}")
     
@@ -240,7 +254,6 @@ def handle_sms():
     send_slack_buttons(data["amount"], data["date"], data["time"], transaction_id)
     
     return "Transaction saved!", 200  # <-- MUST HAVE THIS RETURN
-    # ... rest of your save code ...
 
 # --- ROUTE 2: Handle Button Taps from Slack ---
 @app.route("/slack/interactive", methods=["POST"])
@@ -260,22 +273,24 @@ def handle_slack_interaction():
     category, transaction_id = value.split("_")
     
     # Update the database
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
-    cursor.execute("UPDATE transactions SET category = ? WHERE id = ?", (category, transaction_id))
-    connection.commit()
-    connection.close()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE transactions SET category = %s WHERE id = %s", (category, transaction_id))
+    conn.commit()
+    cur.close()
+    conn.close()
     
     print(f"✅ Updated transaction #{transaction_id} → {category}")
     
     # --- SEND A SECOND "THANK YOU" MESSAGE TO SLACK ---
     try:
         # Get transaction details for the thank you message
-        connection = sqlite3.connect('finapp.db')
-        cursor = connection.cursor()
-        cursor.execute("SELECT amount, date, time FROM transactions WHERE id = ?", (transaction_id,))
-        row = cursor.fetchone()
-        connection.close()
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT amount, date, time FROM transactions WHERE id = %s", (transaction_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
         
         if row:
             amount, date, time = row
@@ -308,18 +323,20 @@ def handle_slack_interaction():
         ]
     }
     return jsonify(response)
+
 # --- ROUTE 3: View Transactions ---
 @app.route("/view")
 def view_transactions():
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM transactions ORDER BY id DESC")
-    rows = cursor.fetchall()
-    connection.close()
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("SELECT * FROM transactions ORDER BY id DESC")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
     
     output = "<h1>📊 Transactions</h1><ul>"
     for row in rows:
-        output += f"<li>#{row[0]} | Rs {row[3]} | {row[1]} {row[2]} | Category: {row[4] or 'Not set'}</li>"
+        output += f"<li>#{row['id']} | Rs {row['amount']} | {row['date']} {row['time']} | Category: {row['category'] or 'Not set'}</li>"
     output += "</ul>"
     return output
 
@@ -346,30 +363,31 @@ def api_transactions():
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
     # Connect to database
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     # Get transactions from the last X days, ordered by date (newest first)
-    cursor.execute("""
+    cur.execute("""
         SELECT date, time, amount, category
         FROM transactions
-        WHERE date >= ?
+        WHERE date >= %s
         AND category IS NOT NULL
         ORDER BY id DESC
         LIMIT 50
     """, (cutoff_str,))
     
-    rows = cursor.fetchall()
-    connection.close()
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
     
     # Build response
     transactions = []
     for row in rows:
         transactions.append({
-            "date": row[0],
-            "time": row[1],
-            "amount": row[2],
-            "category": row[3]
+            "date": row["date"],
+            "time": row["time"],
+            "amount": row["amount"],
+            "category": row["category"]
         })
     
     return jsonify(transactions)
@@ -381,7 +399,6 @@ def add_transaction():
     category = data.get('category')
     date = convert_date_to_iso(data.get('date'))  # <-- Convert here too
     time = data.get('time')
-    # ... rest of code
     
     # Validate required fields
     if not amount or not category or not date or not time:
@@ -393,14 +410,15 @@ def add_transaction():
         return jsonify({"error": "Invalid amount"}), 400
     
     # Save to database
-    connection = sqlite3.connect('finapp.db')
-    cursor = connection.cursor()
-    cursor.execute('''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
         INSERT INTO transactions (date, time, amount, category)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     ''', (date, time, amount, category))
-    connection.commit()
-    connection.close()
+    conn.commit()
+    cur.close()
+    conn.close()
     
     return jsonify({"success": True, "message": "Transaction added!"}), 200
 
@@ -411,6 +429,7 @@ if __name__ == "__main__":
     print("📱 SMS receiver: http://192.168.100.137:5000/sms")
     print("Press Ctrl+C to stop the server")
     app.run(host="0.0.0.0", port=5000, debug=True)
+    
 # --- RENDER DEPLOYMENT ---
 # This runs when gunicorn starts the app (on Render)
 initialize_database()
