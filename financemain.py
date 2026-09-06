@@ -119,6 +119,16 @@ def convert_date_to_iso(date_str):
 
 app = Flask(__name__)
 
+@app.route("/clear")
+def clear_data():
+    """Delete all transactions from the database."""
+    connection = sqlite3.connect('finapp.db')
+    cursor = connection.cursor()
+    cursor.execute('DELETE FROM transactions')
+    connection.commit()
+    connection.close()
+    return "✅ All transactions deleted!"
+
 @app.route("/api/spending")
 def api_spending():
     """Return spending data grouped by category with date filtering."""
