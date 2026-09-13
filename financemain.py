@@ -16,10 +16,14 @@ SLACK_CHANNEL = "#general"
 
 # --- DATABASE CONNECTION (PostgreSQL) ---
 DATABASE_URL = os.environ.get('DATABASE_URL')
-
 def get_db_connection():
-    """Connect to PostgreSQL database."""
-    return psycopg2.connect(DATABASE_URL)
+    """Connect to PostgreSQL (on Render) or SQLite (locally)."""
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL)
+    else:
+        # Fallback to SQLite for local testing
+        print("⚠️ DATABASE_URL not set — using SQLite locally")
+        return sqlite3.connect('finapp.db')
 
 def initialize_database():
     """Create tables if they don't exist."""
@@ -129,6 +133,11 @@ def convert_date_to_iso(date_str):
         return date_str
 
 app = Flask(__name__)
+
+@app.route("/manifest.json")
+def manifest():
+    with open('manifest.json', 'r', encoding='utf-8') as f:
+        return f.read(), 200, {'Content-Type': 'application/manifest+json'}
 
 @app.route("/clear")
 def clear_data():
