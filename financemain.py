@@ -2,28 +2,23 @@ import sqlite3
 import re
 from flask import Flask, request, jsonify
 import json
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-from datetime import datetime, timedelta
-from datetime import datetime 
 import os
+from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from pywebpush import webpush, WebPushException
 
-# --- SLACK CREDENTIALS ---
-SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")  # <-- PASTE YOUR BOT TOKEN HERE
-SLACK_CHANNEL = "#general"
+# --- VAPID CONFIGURATION ---
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_EMAIL = os.environ.get('VAPID_EMAIL', 'mailto:test@example.com')
 
-# --- DATABASE CONNECTION (PostgreSQL) ---
+# --- DATABASE CONNECTION ---
 DATABASE_URL = os.environ.get('DATABASE_URL')
+
 def get_db_connection():
-    """Connect to PostgreSQL (on Render) or SQLite (locally)."""
-    if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL)
-    else:
-        # Fallback to SQLite for local testing
-        print("⚠️ DATABASE_URL not set — using SQLite locally")
-        return sqlite3.connect('finapp.db')
+    """Connect to PostgreSQL database."""
+    return psycopg2.connect(DATABASE_URL)
 
 def initialize_database():
     """Create tables if they don't exist."""
@@ -39,109 +34,142 @@ def initialize_database():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id SERIAL PRIMARY KEY,
+        subscription TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
     conn.commit()
     cur.close()
     conn.close()
-    print("✅ Database ready (PostgreSQL)")   # <-- Now it says PostgreSQL
+    print("✅ Database ready (PostgreSQL)")
 
 # --- SMS PARSER ---
 def parse_sms(text):
-    """
-    Extract amount, time, and date from SMS text.
-    Handles:
-    - Debit: "PKR X.XX has been debited at HH:MM on DD-Mon-YYYY"
-    - Sent (RAAST Transfer): "PKR X.XX sent to NAME ... on DD-Mon-YYYY at HH:MM"
-    - Sent (RAAST Payment): "PKR X.XX sent to NAME as RAAST payment ... on DD-Mon-YYYY at HH:MM"
-    Ignores:
-    - OTP messages
-    - Credits (received money)
-    """
-    
-    # --- IGNORE: OTP messages ---
     if "OTP" in text.upper() or "Valid for" in text:
         print("⏭️ Ignored: OTP message")
         return None
-    
-    # --- IGNORE: Credits (received money) ---
     if "received from" in text.lower():
-        print("⏭️ Ignored: Credit transaction (received money)")
+        print("⏭️ Ignored: Credit transaction")
         return None
-    
-    # --- IGNORE: Anything that doesn't look like an expense ---
-    # If it doesn't contain "debited" or "sent to", ignore it
     if "debited" not in text.lower() and "sent to" not in text.lower():
         print("⏭️ Ignored: Not a transaction SMS")
         return None
     
-    # --- 1. EXTRACT AMOUNT ---
     amount_match = re.search(r"PKR\s*([\d,]+(?:\.\d{2})?)", text, re.IGNORECASE)
     if not amount_match:
         print("❌ Could not find amount in SMS")
         return None
-    
     amount_str = amount_match.group(1).replace(",", "")
     amount = float(amount_str)
     
-    # --- 2. EXTRACT DATE ---
     date_match = re.search(r"on\s+(\d{2}-[A-Za-z]{3}-\d{4})", text, re.IGNORECASE)
     if not date_match:
         print("❌ Could not find date in SMS")
         return None
-    
     date = date_match.group(1)
     
-    # --- 3. EXTRACT TIME ---
     time_match = re.search(r"at\s+(\d{2}:\d{2})", text, re.IGNORECASE)
     if not time_match:
         print("❌ Could not find time in SMS")
         return None
-    
     time = time_match.group(1)
     
-    # --- 4. DETERMINE TYPE AND MERCHANT ---
     if "sent to" in text.lower():
-        transaction_type = "expense"
         recipient_match = re.search(r"sent to\s+([A-Za-z\.\s\(\)]+?)(?:\s+\(|\s+as\s+|$)", text, re.IGNORECASE)
-        if recipient_match:
-            merchant = recipient_match.group(1).strip()
-        else:
-            merchant = "Unknown Recipient"
-    else:  # "debited" is present
-        transaction_type = "expense"
+        merchant = recipient_match.group(1).strip() if recipient_match else "Unknown Recipient"
+    else:
         merchant = "Unknown Merchant"
     
     return {
         "amount": amount,
         "date": convert_date_to_iso(date),
         "time": time,
-        "merchant": merchant,
-        "type": transaction_type
+        "merchant": merchant
     }
 
 def convert_date_to_iso(date_str):
-    """
-    Convert DD-Mon-YYYY to YYYY-MM-DD
-    Example: "29-Aug-2026" → "2026-08-29"
-    """
     try:
-        # Parse the date string
         dt = datetime.strptime(date_str, "%d-%b-%Y")
-        # Return in ISO format
         return dt.strftime("%Y-%m-%d")
     except ValueError:
-        # If it's already ISO, return as-is
         return date_str
 
 app = Flask(__name__)
 
+# --- PWA ROUTES ---
 @app.route("/manifest.json")
 def manifest():
     with open('manifest.json', 'r', encoding='utf-8') as f:
         return f.read(), 200, {'Content-Type': 'application/manifest+json'}
 
+@app.route("/service-worker.js")
+def service_worker():
+    with open('service-worker.js', 'r', encoding='utf-8') as f:
+        return f.read(), 200, {'Content-Type': 'application/javascript'}
+
+# --- PUSH NOTIFICATION SUBSCRIPTION ---
+@app.route("/subscribe", methods=["POST"])
+def subscribe():
+    """Save the user's push subscription."""
+    data = request.get_json()
+    subscription = json.dumps(data)
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Clear old subscriptions (only one user)
+    cur.execute('DELETE FROM push_subscriptions')
+    cur.execute('INSERT INTO push_subscriptions (subscription) VALUES (%s)', (subscription,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    print("✅ Push subscription saved")
+    return jsonify({"success": True}), 200
+
+@app.route("/vapid-public-key")
+def vapid_public_key():
+    """Return the VAPID public key for the frontend."""
+    return jsonify({"publicKey": VAPID_PUBLIC_KEY})
+
+# --- SEND PUSH NOTIFICATION ---
+def send_push_notification(amount, date, time, transaction_id):
+    """Send a push notification to all subscribed devices."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT subscription FROM push_subscriptions')
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    if not rows:
+        print("⚠️ No push subscriptions found")
+        return
+    
+    payload = json.dumps({
+        "title": "💰 New Transaction",
+        "body": f"Rs {amount:.2f} on {date} at {time}\nTap to categorize",
+        "url": f"/categorize?id={transaction_id}"
+    })
+    
+    for row in rows:
+        try:
+            subscription_info = json.loads(row[0])
+            webpush(
+                subscription_info=subscription_info,
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": VAPID_EMAIL}
+            )
+            print(f"📨 Push notification sent!")
+        except WebPushException as e:
+            print(f"❌ Push failed: {e}")
+
+# --- CLEAR DATA ---
 @app.route("/clear")
 def clear_data():
-    """Delete all transactions from the database."""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('DELETE FROM transactions')
@@ -150,22 +178,15 @@ def clear_data():
     conn.close()
     return "✅ All transactions deleted!"
 
+# --- API SPENDING ---
 @app.route("/api/spending")
 def api_spending():
-    """Return spending data grouped by category with date filtering."""
-    
-    # Get the 'days' parameter from the URL (default: 30 days)
     days = request.args.get('days', default=30, type=int)
-    
-    # Calculate the cutoff date
     cutoff_date = datetime.now() - timedelta(days=days)
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
-    # Connect to the database
     conn = get_db_connection()
     cur = conn.cursor()
-    
-    # Query: sum amounts by category, only recent transactions
     cur.execute("""
         SELECT category, SUM(amount) as total
         FROM transactions
@@ -174,66 +195,22 @@ def api_spending():
         GROUP BY category
         ORDER BY total DESC
     """, (cutoff_str,))
-    
     rows = cur.fetchall()
     cur.close()
     conn.close()
     
-    # Calculate total spending
     total_spent = sum([row[1] for row in rows])
-    
-    # Build the response
     data = {
         "labels": [row[0] for row in rows],
         "values": [row[1] for row in rows],
         "total": total_spent,
         "days": days
     }
-    
     return jsonify(data)
 
-# --- SLACK CLIENT ---
-client = WebClient(token=SLACK_BOT_TOKEN)
-
-# --- SEND SLACK MESSAGE WITH BUTTONS ---
-def send_slack_buttons(amount, date, time, transaction_id):
-    message = [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"💰 *Rs {amount:.2f} spent*\n📅 {date} at {time}\n\nWhat category?"
-            }
-        },
-        {
-            "type": "actions",
-            "elements": [
-                {"type": "button", "text": {"type": "plain_text", "text": "🍔 Food"}, "value": f"Food_{transaction_id}", "action_id": "category_food"},
-                {"type": "button", "text": {"type": "plain_text", "text": "⛽ Fuel"}, "value": f"Fuel_{transaction_id}", "action_id": "category_fuel"},
-                {"type": "button", "text": {"type": "plain_text", "text": "🛒 Groceries"}, "value": f"Groceries_{transaction_id}", "action_id": "category_groceries"},
-                {"type": "button", "text": {"type": "plain_text", "text": "📺 Entertainment"}, "value": f"Entertainment_{transaction_id}", "action_id": "category_entertainment"},
-                {"type": "button", "text": {"type": "plain_text", "text": "🛍️ Shopping"}, "value": f"Shopping_{transaction_id}", "action_id": "category_shopping"},
-                {"type": "button", "text": {"type": "plain_text", "text": "🏠 Bills"}, "value": f"Bills_{transaction_id}", "action_id": "category_bills"},
-                {"type": "button", "text": {"type": "plain_text", "text": "💸 Transfer"}, "value": f"Transfer_{transaction_id}", "action_id": "category_transfer"},
-                {"type": "button", "text": {"type": "plain_text", "text": "❓ Other"}, "value": f"Other_{transaction_id}", "action_id": "category_other"}
-            ]
-        }
-    ]
-    
-    try:
-        client.chat_postMessage(
-            channel=SLACK_CHANNEL,
-            blocks=message,
-            text="Categorize your transaction"
-        )
-        print("📨 Slack message sent!")
-    except Exception as e:
-        print(f"❌ Slack error: {e}")
-
-# --- ROUTE 1: Receive SMS ---
+# --- RECEIVE SMS ---
 @app.route("/sms", methods=["POST"])
 def handle_sms():
-    # Get SMS text
     if request.form:
         sms_text = request.form.get('sms', '')
     else:
@@ -243,9 +220,8 @@ def handle_sms():
     
     data = parse_sms(sms_text)
     if not data:
-        return "Could not parse SMS", 400  # <-- MUST HAVE THIS RETURN
+        return "Could not parse SMS", 400
     
-    # Save to database
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -259,29 +235,24 @@ def handle_sms():
     
     print(f"✅ Saved: Rs {data['amount']} on {data['date']} at {data['time']}")
     
-    # Send Slack notification
-    send_slack_buttons(data["amount"], data["date"], data["time"], transaction_id)
+    # Send push notification
+    send_push_notification(data["amount"], data["date"], data["time"], transaction_id)
     
-    return "Transaction saved!", 200  # <-- MUST HAVE THIS RETURN
+    return "Transaction saved!", 200
 
-# --- ROUTE 2: Handle Button Taps from Slack ---
-@app.route("/slack/interactive", methods=["POST"])
-def handle_slack_interaction():
-    print("🔍 Button tapped!")
+# --- CATEGORIZE PAGE (loaded when notification is tapped) ---
+@app.route("/categorize")
+def categorize_page():
+    with open('categorize.html', 'r', encoding='utf-8') as f:
+        return f.read()
+
+# --- UPDATE CATEGORY (called from categorize page) ---
+@app.route("/api/update_category", methods=["POST"])
+def update_category():
+    data = request.get_json()
+    transaction_id = data.get('transaction_id')
+    category = data.get('category')
     
-    # Get the payload from Slack
-    payload = request.form["payload"]
-    print(f"🔍 Raw payload: {payload}")
-    
-    # Parse the JSON
-    data = json.loads(payload)
-    
-    # Get the button value
-    action = data["actions"][0]
-    value = action["value"]
-    category, transaction_id = value.split("_")
-    
-    # Update the database
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("UPDATE transactions SET category = %s WHERE id = %s", (category, transaction_id))
@@ -290,50 +261,23 @@ def handle_slack_interaction():
     conn.close()
     
     print(f"✅ Updated transaction #{transaction_id} → {category}")
-    
-    # --- SEND A SECOND "THANK YOU" MESSAGE TO SLACK ---
-    try:
-        # Get transaction details for the thank you message
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT amount, date, time FROM transactions WHERE id = %s", (transaction_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-        
-        if row:
-            amount, date, time = row
-            thank_you_message = (
-                f"✅ *Thank you!* 🙌\n"
-                f"Your purchase of *Rs {amount:.2f}* on {date} at {time} has been categorized as *{category}*."
-            )
-        else:
-            thank_you_message = f"✅ Thank you! Transaction #{transaction_id} saved as *{category}*!"
-        
-        # Send the thank you message to Slack
-        client.chat_postMessage(
-            channel=SLACK_CHANNEL,
-            text=thank_you_message
-        )
-        print("📨 Thank you message sent to Slack!")
-    except Exception as e:
-        print(f"❌ Failed to send thank you message: {e}")
-    
-    # Update the original message to show it's been categorized
-    response = {
-        "blocks": [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"✅ Categorized as *{category}*!"
-                }
-            }
-        ]
-    }
-    return jsonify(response)
+    return jsonify({"success": True}), 200
 
-# --- ROUTE 3: View Transactions ---
+# --- GET SINGLE TRANSACTION (for categorize page) ---
+@app.route("/api/transaction/<int:transaction_id>")
+def get_transaction(transaction_id):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("SELECT * FROM transactions WHERE id = %s", (transaction_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify(row)
+
+# --- VIEW ---
 @app.route("/view")
 def view_transactions():
     conn = get_db_connection()
@@ -349,33 +293,27 @@ def view_transactions():
     output += "</ul>"
     return output
 
-# --- ROUTE 4: Test Route ---
+# --- TEST ROUTE ---
 @app.route("/test")
 def test():
     print("🔍 Test route was hit!")
     return "Test OK!", 200
 
+# --- DASHBOARD ---
 @app.route("/dashboard")
 def dashboard():
     with open('dashboard.html', 'r', encoding='utf-8') as file:
-        return file.read() 
+        return file.read()
 
+# --- API TRANSACTIONS ---
 @app.route("/api/transactions")
 def api_transactions():
-    """Return recent transactions for the dashboard list."""
-    
-    # Get the 'days' parameter (default: 30)
     days = request.args.get('days', default=30, type=int)
-    
-    # Calculate cutoff date
     cutoff_date = datetime.now() - timedelta(days=days)
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
-    # Connect to database
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    
-    # Get transactions from the last X days, ordered by date (newest first)
     cur.execute("""
         SELECT date, time, amount, category
         FROM transactions
@@ -384,12 +322,10 @@ def api_transactions():
         ORDER BY id DESC
         LIMIT 50
     """, (cutoff_str,))
-    
     rows = cur.fetchall()
     cur.close()
     conn.close()
     
-    # Build response
     transactions = []
     for row in rows:
         transactions.append({
@@ -398,18 +334,17 @@ def api_transactions():
             "amount": row["amount"],
             "category": row["category"]
         })
-    
     return jsonify(transactions)
 
+# --- ADD TRANSACTION ---
 @app.route("/api/add_transaction", methods=["POST"])
 def add_transaction():
     data = request.get_json()
     amount = data.get('amount')
     category = data.get('category')
-    date = convert_date_to_iso(data.get('date'))  # <-- Convert here too
+    date = convert_date_to_iso(data.get('date'))
     time = data.get('time')
     
-    # Validate required fields
     if not amount or not category or not date or not time:
         return jsonify({"error": "Missing required fields"}), 400
     
@@ -418,7 +353,6 @@ def add_transaction():
     except ValueError:
         return jsonify({"error": "Invalid amount"}), 400
     
-    # Save to database
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -435,10 +369,7 @@ def add_transaction():
 if __name__ == "__main__":
     initialize_database()
     print("🚀 Server is starting")
-    print("📱 SMS receiver: http://192.168.100.137:5000/sms")
-    print("Press Ctrl+C to stop the server")
     app.run(host="0.0.0.0", port=5000, debug=True)
-    
+
 # --- RENDER DEPLOYMENT ---
-# This runs when gunicorn starts the app (on Render)
 initialize_database()

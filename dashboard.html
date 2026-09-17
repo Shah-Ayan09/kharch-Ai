@@ -1,588 +1,930 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="manifest" href="/manifest.json">
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>Kharch AI · Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+<meta name="theme-color" content="#09090B" />
+<link rel="manifest" href="/manifest.json" />
+<title>Kharch AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #09090B;
+    --bg-elevated: #111113;
+    --bg-subtle: #17171A;
+    --border: #232326;
+    --border-strong: #2E2E32;
+    --fg: #FAFAFA;
+    --fg-muted: #A1A1AA;
+    --fg-subtle: #71717A;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-fg: #FFFFFF;
+    --success: #16A34A;
+    --danger: #DC2626;
+    --warning: #D97706;
+  }
 
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-        body {
-            background: #0b0d1a;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px 16px 0;
-            margin: 0;
-            height: 100vh;
-            overflow: hidden;
-        }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'ss01', 'cv01';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 
-        .container {
-            max-width: 420px;
-            width: 100%;
-            height: 100vh;
-            max-height: 100vh;
-            background: linear-gradient(145deg, #12142b, #1a1d3a);
-            border-radius: 36px 36px 0 0;
-            padding: 28px 22px 0;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-            flex-shrink: 0;
-        }
-        .header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #b7baff, #8b8ef7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+  /* ---------- LAYOUT ---------- */
+  .app {
+    max-width: 480px;
+    width: 100%;
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
 
-        .add-btn {
-            background: linear-gradient(135deg, #6c6ff0, #7d7ff7);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 26px;
-            font-weight: 300;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(108, 111, 240, 0.35);
-            transition: transform 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: manipulation;
-            flex-shrink: 0;
-        }
-        .add-btn:active {
-            transform: scale(0.92);
-        }
+  /* ---------- HEADER ---------- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 16px;
+    flex-shrink: 0;
+  }
 
-        .sub {
-            color: #7b7ea8;
-            font-size: 14px;
-            font-weight: 400;
-            margin-bottom: 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            padding-bottom: 10px;
-            flex-shrink: 0;
-        }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .filter-btn {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #8f92bb;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            touch-action: manipulation;
-        }
-        .filter-btn:hover {
-            background: rgba(139, 142, 247, 0.12);
-            color: #d0d3ff;
-        }
-        .filter-btn.active {
-            background: linear-gradient(135deg, #6c6ff0, #7d7ff7);
-            border-color: #6c6ff0;
-            color: #fff;
-            box-shadow: 0 6px 18px rgba(108, 111, 240, 0.35);
-        }
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    display: grid;
+    place-items: center;
+    color: var(--accent-fg);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+  }
 
-        .chart-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0;
-            margin-bottom: 12px;
-        }
-        .ring-wrap {
-            position: relative;
-            width: 160px;
-            height: 160px;
-            margin: 0 auto 4px;
-        }
-        .ring-wrap canvas {
-            width: 100% !important;
-            height: 100% !important;
-            display: block;
-            touch-action: none;
-        }
-        .ring-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-        }
-        .ring-amount {
-            font-size: 24px;
-            font-weight: 700;
-            color: #f0f3ff;
-            line-height: 1.1;
-        }
-        .ring-label {
-            font-size: 10px;
-            color: #7b7ea8;
-            font-weight: 500;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-        }
+  .brand-name {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
 
-        .transaction-list-wrapper {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow-y: auto;
-            padding-right: 4px;
-            margin-top: 4px;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
-            padding-top: 10px;
-        }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    display: grid;
+    place-items: center;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  }
+  .icon-btn:hover {
+    background: var(--bg-subtle);
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
+  .icon-btn:active {
+    transform: scale(0.98);
+  }
+  .icon-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 
-        .transaction-list-wrapper::-webkit-scrollbar {
-            width: 4px;
-        }
-        .transaction-list-wrapper::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-        }
-        .transaction-list-wrapper::-webkit-scrollbar-thumb {
-            background: #3d4070;
-            border-radius: 8px;
-        }
+  /* ---------- SCROLL AREA ---------- */
+  .scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 20px 24px;
+  }
+  .scroll::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
 
-        .transaction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            margin-bottom: 4px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-        }
+  /* ---------- FILTERS ---------- */
+  .filters {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 24px;
+  }
 
-        .tx-left {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            flex: 1;
-            min-width: 0;
-        }
-        .tx-category {
-            font-size: 14px;
-            font-weight: 600;
-            color: #d6d9f0;
-        }
-        .tx-date {
-            font-size: 11px;
-            color: #5d6090;
-        }
-        .tx-right {
-            text-align: right;
-            flex-shrink: 0;
-            margin-left: 12px;
-        }
-        .tx-amount {
-            font-size: 15px;
-            font-weight: 600;
-            color: #f0f3ff;
-        }
+  .filter-btn {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    background: transparent;
+    color: var(--fg-subtle);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    border-radius: 7px;
+    transition: background 150ms ease, color 150ms ease;
+    min-height: 36px;
+  }
+  .filter-btn:hover {
+    color: var(--fg);
+  }
+  .filter-btn.active {
+    background: var(--bg-subtle);
+    color: var(--fg);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .filter-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
 
-        .empty-state {
-            text-align: center;
-            padding: 30px 12px;
-            color: #5d6090;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 16px;
-            border: 1px dashed rgba(255, 255, 255, 0.06);
-        }
+  /* ---------- RING (centered) ---------- */
+  .ring-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 28px;
+  }
 
-        /* --- Modal --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(6px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-        }
-        .modal-overlay.active {
-            display: flex;
-        }
-        .modal {
-            background: linear-gradient(145deg, #1a1d3a, #12142b);
-            border-radius: 28px;
-            padding: 30px 24px;
-            max-width: 360px;
-            width: 90%;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-        }
-        .modal h2 {
-            color: #f0f3ff;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        .modal .subtitle {
-            color: #7b7ea8;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-        .modal label {
-            display: block;
-            color: #b7baff;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-        .modal input, .modal select {
-            width: 100%;
-            padding: 12px 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            color: #f0f3ff;
-            font-size: 16px;
-            margin-bottom: 14px;
-            outline: none;
-            transition: border 0.2s;
-        }
-        .modal input:focus, .modal select:focus {
-            border-color: #6c6ff0;
-        }
-        .modal input::placeholder {
-            color: #5d6090;
-        }
-        .modal .btn-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 4px;
-        }
-        .modal .btn-submit {
-            flex: 1;
-            padding: 14px;
-            background: linear-gradient(135deg, #6c6ff0, #7d7ff7);
-            border: none;
-            border-radius: 14px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.15s;
-            touch-action: manipulation;
-        }
-        .modal .btn-submit:active {
-            transform: scale(0.97);
-        }
-        .modal .btn-cancel {
-            padding: 14px 20px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 14px;
-            color: #8f92bb;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
+  .ring-wrap {
+    position: relative;
+    width: 240px;
+    height: 240px;
+  }
+  .ring-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    touch-action: none;
+  }
 
-        @media (max-width: 440px) {
-            .container {
-                padding: 16px 14px 0;
-                border-radius: 28px 28px 0 0;
-            }
-            .ring-wrap {
-                width: 140px;
-                height: 140px;
-            }
-            .ring-amount {
-                font-size: 20px;
-            }
-            .filter-btn {
-                font-size: 12px;
-                padding: 6px 12px;
-            }
-            .header h1 {
-                font-size: 22px;
-            }
-            .add-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 22px;
-            }
-        }
-    </style>
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .ring-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    margin-bottom: 6px;
+  }
+
+  .ring-amount {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- TOOLTIP ---------- */
+  .tooltip {
+    margin-top: 20px;
+    min-height: 44px;
+    padding: 10px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transition: opacity 150ms ease;
+    font-size: 14px;
+    pointer-events: none;
+    max-width: 100%;
+  }
+  .tooltip.visible {
+    opacity: 1;
+  }
+  .tooltip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .tooltip-name {
+    color: var(--fg-muted);
+    font-weight: 500;
+  }
+  .tooltip-amount {
+    color: var(--fg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+  .tooltip-percent {
+    color: var(--fg-subtle);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+  }
+
+  /* ---------- SECTION HEADER ---------- */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+  }
+
+  .section-meta {
+    font-size: 12px;
+    color: var(--fg-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- TRANSACTION LIST ---------- */
+  .tx-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+  }
+
+  .tx-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 2px;
+    border-bottom: 1px solid var(--border);
+    transition: background 120ms ease;
+  }
+  .tx-row:active {
+    background: var(--bg-elevated);
+  }
+
+  .tx-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .tx-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .tx-cat {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg);
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tx-time {
+    font-size: 12px;
+    color: var(--fg-subtle);
+    font-variant-numeric: tabular-nums;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+
+  .tx-amt {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
+  }
+
+  /* ---------- EMPTY / LOADING ---------- */
+  .empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--fg-subtle);
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ---------- SUBSCRIBE BANNER ---------- */
+  .subscribe {
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .subscribe.hidden {
+    display: none;
+  }
+  .subscribe-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .subscribe-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+    margin-bottom: 2px;
+    letter-spacing: -0.005em;
+  }
+  .subscribe-desc {
+    font-size: 12px;
+    color: var(--fg-muted);
+    line-height: 1.4;
+  }
+  .subscribe-btn {
+    padding: 9px 14px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    transition: background 150ms ease;
+    min-height: 36px;
+    flex-shrink: 0;
+  }
+  .subscribe-btn:hover {
+    background: var(--accent-hover);
+  }
+  .subscribe-btn:active {
+    transform: scale(0.98);
+  }
+  .subscribe-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ---------- MODAL ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+    backdrop-filter: blur(2px);
+  }
+  .overlay.open {
+    display: flex;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-elevated);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-top: 1px solid var(--border);
+    padding: 20px 20px 28px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .sheet-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+  }
+  .sheet-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .sheet-close:hover {
+    background: var(--bg-subtle);
+    color: var(--fg);
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.005em;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 11px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--fg);
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color 150ms ease;
+    min-height: 44px;
+  }
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .field input::placeholder {
+    color: var(--fg-subtle);
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .sheet-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .btn-secondary {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--fg-muted);
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 44px;
+  }
+  .btn-secondary:hover {
+    background: var(--bg-subtle);
+    color: var(--fg);
+  }
+  .btn-primary {
+    flex: 2;
+    padding: 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: var(--accent-fg);
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 44px;
+    transition: background 150ms ease;
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
+  .btn-primary:active {
+    transform: scale(0.99);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 400px) {
+    .ring-wrap { width: 200px; height: 200px; }
+    .ring-amount { font-size: 26px; }
+  }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>Kharch AI</h1>
-        <button class="add-btn" id="addBtn">+</button>
-    </div>
-    <div class="sub">Spending · real time</div>
+<div class="app">
 
-    <div class="filter-row">
-        <button class="filter-btn" data-days="7">1W</button>
-        <button class="filter-btn" data-days="14">2W</button>
-        <button class="filter-btn active" data-days="30">4W</button>
-        <button class="filter-btn" data-days="90">3M</button>
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">K</div>
+      <span class="brand-name">Kharch</span>
+    </div>
+    <button class="icon-btn" id="addBtn" aria-label="Add transaction">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+  </header>
+
+  <main class="scroll">
+
+    <div class="filters" role="tablist" aria-label="Time range">
+      <button class="filter-btn" data-days="7" role="tab">1W</button>
+      <button class="filter-btn" data-days="14" role="tab">2W</button>
+      <button class="filter-btn active" data-days="30" role="tab">4W</button>
+      <button class="filter-btn" data-days="90" role="tab">3M</button>
     </div>
 
-    <div class="chart-section">
-        <div class="ring-wrap">
-            <canvas id="spendingChart"></canvas>
-            <div class="ring-center">
-                <div class="ring-amount" id="totalAmount">Rs 0</div>
-                <div class="ring-label">Total</div>
-            </div>
+    <section class="ring-section">
+      <div class="ring-wrap">
+        <canvas id="spendingChart"></canvas>
+        <div class="ring-center">
+          <div class="ring-label">Total spent</div>
+          <div class="ring-amount" id="totalAmount">Rs 0</div>
         </div>
+      </div>
+      <div class="tooltip" id="tooltip">
+        <span class="tooltip-dot" id="tooltipDot"></span>
+        <span class="tooltip-name" id="tooltipName">—</span>
+        <span class="tooltip-amount" id="tooltipAmount">Rs 0</span>
+        <span class="tooltip-percent" id="tooltipPercent"></span>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <span class="section-title">Transactions</span>
+      <span class="section-meta" id="txCount">0</span>
     </div>
 
-    <div class="transaction-list-wrapper" id="transactionList">
-        <div class="empty-state">Loading transactions...</div>
+    <div class="tx-list" id="transactionList">
+      <div class="empty">Loading…</div>
     </div>
+
+    <div class="subscribe hidden" id="subscribeCard">
+      <div class="subscribe-body">
+        <div class="subscribe-title">Enable notifications</div>
+        <div class="subscribe-desc">Get notified when a new transaction arrives so you can categorize it right away.</div>
+      </div>
+      <button class="subscribe-btn" id="subscribeBtn">Enable</button>
+    </div>
+
+  </main>
+
 </div>
 
-<!-- Modal -->
-<div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-        <h2>➕ Add Transaction</h2>
-        <div class="subtitle">Log a manual transaction</div>
-        <label for="modalAmount">Amount (Rs)</label>
-        <input type="number" id="modalAmount" placeholder="e.g. 2500" step="0.01" />
-        <label for="modalCategory">Category</label>
-        <select id="modalCategory">
-            <option value="Food">🍔 Food</option>
-            <option value="Fuel">⛽ Fuel</option>
-            <option value="Groceries">🛒 Groceries</option>
-            <option value="Entertainment">📺 Entertainment</option>
-            <option value="Shopping">🛍️ Shopping</option>
-            <option value="Bills">🏠 Bills</option>
-            <option value="Transfer">💸 Transfer</option>
-            <option value="Other">❓ Other</option>
-        </select>
-        <label for="modalDate">Date</label>
-        <input type="date" id="modalDate" />
-        <label for="modalTime">Time</label>
-        <input type="time" id="modalTime" />
-        <div class="btn-row">
-            <button class="btn-cancel" id="modalCancel">Cancel</button>
-            <button class="btn-submit" id="modalSubmit">Add Transaction</button>
-        </div>
+<div class="overlay" id="overlay">
+  <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <span class="sheet-title" id="sheetTitle">Add transaction</span>
+      <button class="sheet-close" id="sheetClose" aria-label="Close">×</button>
     </div>
+
+    <div class="field">
+      <label for="mAmount">Amount (Rs)</label>
+      <input type="number" id="mAmount" inputmode="decimal" step="0.01" placeholder="0.00" />
+    </div>
+
+    <div class="field">
+      <label for="mCategory">Category</label>
+      <select id="mCategory">
+        <option value="Food">Food</option>
+        <option value="Fuel">Fuel</option>
+        <option value="Groceries">Groceries</option>
+        <option value="Entertainment">Entertainment</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Bills">Bills</option>
+        <option value="Transfer">Transfer</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label for="mDate">Date</label>
+        <input type="date" id="mDate" />
+      </div>
+      <div class="field">
+        <label for="mTime">Time</label>
+        <input type="time" id="mTime" />
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-secondary" id="sheetCancel">Cancel</button>
+      <button class="btn-primary" id="sheetSave">Save</button>
+    </div>
+  </div>
 </div>
 
 <script>
-    const COLORS = ['#7d7ff7', '#4ecdc4', '#f7a072', '#f7d06e', '#b57df7', '#f77d8c', '#6fc3df', '#b3b9f0', '#f5b0cb', '#a3d9b1'];
-    let chart = null;
-    let currentDays = 30;
+const COLORS = ['#2563EB', '#0891B2', '#16A34A', '#D97706', '#DC2626', '#7C3AED', '#DB2777', '#059669', '#4F46E5', '#CA8A04'];
+let chart = null;
+let currentDays = 30;
 
-    function getCategoryEmoji(category) {
-        const map = {
-            'Food': '🍔',
-            'Fuel': '⛽',
-            'Groceries': '🛒',
-            'Entertainment': '📺',
-            'Shopping': '🛍️',
-            'Bills': '🏠',
-            'Transfer': '💸',
-            'Other': '❓'
-        };
-        return map[category] || '📌';
-    }
+const CAT_EMOJI = {
+  Food: '🍔', Fuel: '⛽', Groceries: '🛒', Entertainment: '📺',
+  Shopping: '🛍️', Bills: '🏠', Transfer: '💸', Other: '❓'
+};
 
-    async function loadChartData(days) {
-        try {
-            const res = await fetch(`/api/spending?days=${days}`);
-            const data = await res.json();
-            document.getElementById('totalAmount').innerText = `Rs ${data.total.toLocaleString()}`;
-            const ctx = document.getElementById('spendingChart').getContext('2d');
-            if (chart) {
-                chart.data.labels = data.labels;
-                chart.data.datasets[0].data = data.values;
-                chart.data.datasets[0].backgroundColor = data.labels.map((_, i) => COLORS[i % COLORS.length]);
-                chart.update();
+/* ---------- SERVICE WORKER ---------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(r => console.log('SW registered'))
+    .catch(e => console.log('SW failed', e));
+}
+
+/* ---------- HELPERS ---------- */
+function fmtRs(n) {
+  return 'Rs ' + Number(n || 0).toLocaleString();
+}
+
+function emojiFor(cat) {
+  return CAT_EMOJI[cat] || '📌';
+}
+
+/* ---------- CHART ---------- */
+const tooltipEl = document.getElementById('tooltip');
+const tooltipDot = document.getElementById('tooltipDot');
+const tooltipName = document.getElementById('tooltipName');
+const tooltipAmount = document.getElementById('tooltipAmount');
+const tooltipPercent = document.getElementById('tooltipPercent');
+
+function showTooltip(label, value, total, index) {
+  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+  tooltipDot.style.background = COLORS[index % COLORS.length];
+  tooltipName.textContent = label;
+  tooltipAmount.textContent = fmtRs(value);
+  tooltipPercent.textContent = pct + '%';
+  tooltipEl.classList.add('visible');
+}
+
+function hideTooltip() {
+  tooltipEl.classList.remove('visible');
+}
+
+async function loadChart(days) {
+  try {
+    const res = await fetch(`/api/spending?days=${days}`);
+    const data = await res.json();
+
+    document.getElementById('totalAmount').textContent = fmtRs(data.total);
+
+    const ctx = document.getElementById('spendingChart').getContext('2d');
+
+    if (chart) {
+      chart.data.labels = data.labels;
+      chart.data.datasets[0].data = data.values;
+      chart.data.datasets[0].backgroundColor = data.labels.map((_, i) => COLORS[i % COLORS.length]);
+      chart.update();
+    } else {
+      chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            data: data.values,
+            backgroundColor: data.labels.map((_, i) => COLORS[i % COLORS.length]),
+            borderColor: '#111113',
+            borderWidth: 3,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '74%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          onHover: (evt, els) => {
+            if (els.length > 0) {
+              const i = els[0].index;
+              const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              showTooltip(chart.data.labels[i], chart.data.datasets[0].data[i], total, i);
             } else {
-                chart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            data: data.values,
-                            backgroundColor: data.labels.map((_, i) => COLORS[i % COLORS.length]),
-                            borderColor: '#12142b',
-                            borderWidth: 4,
-                            hoverOffset: 15
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '70%',
-                        plugins: { legend: { display: false } },
-                        animation: { animateRotate: true, duration: 600 }
-                    }
-                });
+              hideTooltip();
             }
-        } catch (err) {
-            console.error('Chart error:', err);
-            document.getElementById('totalAmount').innerText = '⚠️';
+          }
         }
+      });
+    }
+  } catch (err) {
+    console.error('Chart error:', err);
+    document.getElementById('totalAmount').textContent = 'Err';
+  }
+}
+
+/* ---------- TRANSACTIONS ---------- */
+async function loadTransactions(days) {
+  const list = document.getElementById('transactionList');
+  try {
+    const res = await fetch(`/api/transactions?days=${days}`);
+    const tx = await res.json();
+
+    document.getElementById('txCount').textContent = tx.length + (tx.length === 1 ? ' entry' : ' entries');
+
+    if (!tx || tx.length === 0) {
+      list.innerHTML = '<div class="empty">No transactions yet</div>';
+      return;
     }
 
-    async function loadTransactions(days) {
-        console.log('🔍 loadTransactions called with days:', days);
-        try {
-            const res = await fetch(`/api/transactions?days=${days}`);
-            console.log('🔍 Response status:', res.status);
-            const transactions = await res.json();
-            console.log('🔍 Transactions received:', transactions);
+    list.innerHTML = tx.map(t => `
+      <div class="tx-row">
+        <div class="tx-badge">${emojiFor(t.category)}</div>
+        <div class="tx-info">
+          <div class="tx-cat">${t.category || 'Uncategorized'}</div>
+          <div class="tx-time">${t.date} · ${t.time}</div>
+        </div>
+        <div class="tx-amt">${fmtRs(t.amount)}</div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Tx error:', err);
+    list.innerHTML = '<div class="empty">Could not load</div>';
+  }
+}
 
-            const listContainer = document.getElementById('transactionList');
-            if (!listContainer) {
-                console.error('❌ transactionList container not found!');
-                return;
-            }
+/* ---------- LOAD ---------- */
+async function loadAll(days) {
+  currentDays = days;
+  await Promise.all([loadChart(days), loadTransactions(days)]);
+}
 
-            if (!transactions || transactions.length === 0) {
-                listContainer.innerHTML = `<div class="empty-state">No transactions in this period</div>`;
-                return;
-            }
+/* ---------- FILTERS ---------- */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadAll(parseInt(btn.dataset.days, 10));
+  });
+});
 
-            let html = '';
-            transactions.forEach(tx => {
-                const category = tx.category || 'Uncategorized';
-                const emoji = getCategoryEmoji(category);
-                html += `
-                    <div class="transaction-item">
-                        <div class="tx-left">
-                            <span class="tx-category">${emoji} ${category}</span>
-                            <span class="tx-date">${tx.date} · ${tx.time}</span>
-                        </div>
-                        <div class="tx-right">
-                            <span class="tx-amount">Rs ${tx.amount.toLocaleString()}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            listContainer.innerHTML = html;
-            console.log('✅ Transactions rendered:', transactions.length);
-        } catch (err) {
-            console.error('Transactions error:', err);
-            const listContainer = document.getElementById('transactionList');
-            if (listContainer) {
-                listContainer.innerHTML = `<div class="empty-state">Error loading transactions</div>`;
-            }
-        }
+/* ---------- MODAL ---------- */
+const overlay = document.getElementById('overlay');
+
+function openSheet() {
+  const now = new Date();
+  document.getElementById('mDate').value = now.toISOString().split('T')[0];
+  document.getElementById('mTime').value = now.toTimeString().slice(0, 5);
+  overlay.classList.add('open');
+}
+
+function closeSheet() {
+  overlay.classList.remove('open');
+  document.getElementById('mAmount').value = '';
+}
+
+document.getElementById('addBtn').addEventListener('click', openSheet);
+document.getElementById('sheetClose').addEventListener('click', closeSheet);
+document.getElementById('sheetCancel').addEventListener('click', closeSheet);
+overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSheet(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeSheet(); });
+
+document.getElementById('sheetSave').addEventListener('click', async () => {
+  const amount = document.getElementById('mAmount').value;
+  const category = document.getElementById('mCategory').value;
+  const date = document.getElementById('mDate').value;
+  const time = document.getElementById('mTime').value;
+
+  if (!amount || !date || !time) {
+    alert('Please fill in amount, date and time.');
+    return;
+  }
+
+  const btn = document.getElementById('sheetSave');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const res = await fetch('/api/add_transaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, category, date, time })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeSheet();
+      await loadAll(currentDays);
+    } else {
+      alert('Error: ' + (data.error || 'Unknown'));
     }
+  } catch (err) {
+    alert('Failed to save.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+  }
+});
 
-    async function loadAll(days) {
-        console.log('🔍 loadAll called with days:', days);
-        currentDays = days;
-        await loadChartData(days);
-        await loadTransactions(days);
+/* ---------- PUSH SUBSCRIPTION ---------- */
+const subscribeCard = document.getElementById('subscribeCard');
+const subscribeBtn = document.getElementById('subscribeBtn');
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+async function initPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+
+  if (existing) {
+    subscribeCard.classList.add('hidden');
+    return;
+  }
+
+  subscribeCard.classList.remove('hidden');
+
+  subscribeBtn.addEventListener('click', async () => {
+    subscribeBtn.disabled = true;
+    subscribeBtn.textContent = 'Enabling…';
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        subscribeBtn.disabled = false;
+        subscribeBtn.textContent = 'Enable';
+        return;
+      }
+
+      const keyRes = await fetch('/vapid-public-key');
+      const keyData = await keyRes.json();
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+      });
+
+      await fetch('/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub)
+      });
+
+      subscribeCard.classList.add('hidden');
+    } catch (err) {
+      console.error('Push subscribe failed:', err);
+      subscribeBtn.disabled = false;
+      subscribeBtn.textContent = 'Enable';
     }
+  });
+}
 
-    // Filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            loadAll(parseInt(this.getAttribute('data-days')));
-        });
-    });
-
-    // Modal
-    document.getElementById('addBtn').addEventListener('click', function() {
-        const overlay = document.getElementById('modalOverlay');
-        overlay.classList.add('active');
-        const now = new Date();
-        document.getElementById('modalDate').value = now.toISOString().split('T')[0];
-        document.getElementById('modalTime').value = now.toTimeString().slice(0, 5);
-    });
-
-    function closeModal() {
-        document.getElementById('modalOverlay').classList.remove('active');
-    }
-    document.getElementById('modalCancel').addEventListener('click', closeModal);
-    document.getElementById('modalOverlay').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
-
-    document.getElementById('modalSubmit').addEventListener('click', async function() {
-        const amount = document.getElementById('modalAmount').value;
-        const category = document.getElementById('modalCategory').value;
-        const date = document.getElementById('modalDate').value;
-        const time = document.getElementById('modalTime').value;
-        if (!amount || !date || !time) { alert('Please fill in all fields.'); return; }
-        try {
-            const res = await fetch('/api/add_transaction', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, category, date, time })
-            });
-            const data = await res.json();
-            if (data.success) {
-                closeModal();
-                document.getElementById('modalAmount').value = '';
-                await loadAll(currentDays);
-            } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
-            }
-        } catch (err) {
-            console.error('Add transaction error:', err);
-            alert('Failed to add transaction.');
-        }
-    });
-
-    // Initial load
-    loadAll(30);
+/* ---------- INIT ---------- */
+loadAll(30);
+initPush();
 </script>
+
 </body>
 </html>

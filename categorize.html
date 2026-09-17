@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+<meta name="theme-color" content="#09090B" />
+<title>Categorize · Kharch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090B;
+    --bg-elevated: #111113;
+    --bg-subtle: #17171A;
+    --border: #232326;
+    --border-strong: #2E2E32;
+    --fg: #FAFAFA;
+    --fg-muted: #A1A1AA;
+    --fg-subtle: #71717A;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-fg: #FFFFFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 40px 20px 32px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    margin-bottom: 10px;
+  }
+
+  .amount {
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .meta {
+    font-size: 13px;
+    color: var(--fg-muted);
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prompt {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    margin-bottom: 14px;
+    padding: 0 2px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .cat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    letter-spacing: -0.005em;
+    text-align: left;
+    transition: background 150ms ease, border-color 150ms ease;
+    min-height: 52px;
+    cursor: pointer;
+  }
+
+  .cat:hover {
+    background: var(--bg-subtle);
+    border-color: var(--border-strong);
+  }
+
+  .cat:active {
+    transform: scale(0.98);
+  }
+
+  .cat:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .cat.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  .state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--fg-muted);
+    font-size: 14px;
+    padding: 40px 0;
+  }
+
+  .success-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+    margin: 0 auto 16px;
+    color: #16A34A;
+  }
+
+  .success-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .success-sub {
+    font-size: 13px;
+    color: var(--fg-muted);
+    margin-bottom: 24px;
+  }
+
+  .back-link {
+    display: inline-block;
+    padding: 12px 20px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    min-height: 44px;
+    line-height: 20px;
+  }
+
+  .back-link:hover {
+    background: var(--accent-hover);
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="loading" class="state">Loading…</div>
+
+  <div id="categorize" class="hidden">
+    <div class="header">
+      <div class="label">Transaction</div>
+      <div class="amount" id="amount">Rs 0</div>
+      <div class="meta" id="meta">—</div>
+    </div>
+
+    <div class="prompt">What category?</div>
+
+    <div class="grid">
+      <button class="cat" data-cat="Food">🍔 Food</button>
+      <button class="cat" data-cat="Fuel">⛽ Fuel</button>
+      <button class="cat" data-cat="Groceries">🛒 Groceries</button>
+      <button class="cat" data-cat="Entertainment">📺 Entertainment</button>
+      <button class="cat" data-cat="Shopping">🛍️ Shopping</button>
+      <button class="cat" data-cat="Bills">🏠 Bills</button>
+      <button class="cat" data-cat="Transfer">💸 Transfer</button>
+      <button class="cat" data-cat="Other">❓ Other</button>
+    </div>
+  </div>
+
+  <div id="success" class="state hidden" style="flex-direction: column;">
+    <div class="success-mark">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <div class="success-title">Saved</div>
+    <div class="success-sub">Category updated</div>
+    <a href="/dashboard" class="back-link">Back to dashboard</a>
+  </div>
+
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const txId = params.get('id');
+
+  async function load() {
+    if (!txId) {
+      document.getElementById('loading').textContent = 'No transaction id';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/transaction/${txId}`);
+      const tx = await res.json();
+
+      if (tx.error) {
+        document.getElementById('loading').textContent = 'Transaction not found';
+        return;
+      }
+
+      document.getElementById('amount').textContent = 'Rs ' + Number(tx.amount).toLocaleString();
+      document.getElementById('meta').textContent = `${tx.date} · ${tx.time}`;
+
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('categorize').classList.remove('hidden');
+    } catch (err) {
+      document.getElementById('loading').textContent = 'Failed to load';
+    }
+  }
+
+  document.querySelectorAll('.cat').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.classList.add('selected');
+      document.querySelectorAll('.cat').forEach(b => b.disabled = true);
+
+      try {
+        await fetch('/api/update_category', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transaction_id: txId, category: btn.dataset.cat })
+        });
+
+        document.getElementById('categorize').classList.add('hidden');
+        const success = document.getElementById('success');
+        success.classList.remove('hidden');
+        success.style.display = 'flex';
+      } catch (err) {
+        alert('Failed to save');
+        document.querySelectorAll('.cat').forEach(b => b.disabled = false);
+      }
+    });
+  });
+
+  load();
+</script>
+</body>
+</html>
