@@ -99,6 +99,23 @@ def convert_date_to_iso(date_str):
 
 app = Flask(__name__)
 
+@app.route("/api/pending")
+def api_pending():
+    """Return transactions without a category."""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("""
+        SELECT id, date, time, amount
+        FROM transactions
+        WHERE category IS NULL
+        ORDER BY id DESC
+        LIMIT 20
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
 # --- PWA ROUTES ---
 @app.route("/manifest.json")
 def manifest():

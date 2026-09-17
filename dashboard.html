@@ -96,6 +96,79 @@
     color: var(--fg);
   }
 
+  .pending {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.pending.hidden {
+  display: none;
+}
+.pending-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pending-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: -0.005em;
+}
+.pending-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pending-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  text-decoration: none;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.pending-item:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+.pending-item:active {
+  transform: scale(0.99);
+}
+.pending-amt {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.pending-meta {
+  font-size: 12px;
+  color: var(--fg-subtle);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+.pending-arrow {
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+
   .icon-btn {
     width: 40px;
     height: 40px;
@@ -594,6 +667,14 @@
       </div>
     </section>
 
+    <div class="pending hidden" id="pendingCard">
+  <div class="pending-head">
+    <span class="pending-title">Uncategorized</span>
+    <span class="pending-count" id="pendingCount">0</span>
+  </div>
+  <div class="pending-list" id="pendingList"></div>
+</div>
+
     <div class="section-head">
       <span class="section-title">Transactions</span>
       <span class="section-meta" id="txCount">0</span>
@@ -660,6 +741,33 @@
 </div>
 
 <script>
+    async function loadPending() {
+  try {
+    const res = await fetch('/api/pending');
+    const pending = await res.json();
+    const card = document.getElementById('pendingCard');
+    const list = document.getElementById('pendingList');
+    const count = document.getElementById('pendingCount');
+
+    if (!pending || pending.length === 0) {
+      card.classList.add('hidden');
+      return;
+    }
+
+    card.classList.remove('hidden');
+    count.textContent = pending.length;
+
+    list.innerHTML = pending.map(p => `
+      <a class="pending-item" href="/categorize?id=${p.id}">
+        <span class="pending-amt">Rs ${Number(p.amount).toLocaleString()}</span>
+        <span class="pending-meta">${p.date} · ${p.time}</span>
+        <span class="pending-arrow">›</span>
+      </a>
+    `).join('');
+  } catch (err) {
+    console.error('Pending error:', err);
+  }
+}
 const COLORS = ['#2563EB', '#0891B2', '#16A34A', '#D97706', '#DC2626', '#7C3AED', '#DB2777', '#059669', '#4F46E5', '#CA8A04'];
 let chart = null;
 let currentDays = 30;
@@ -791,7 +899,7 @@ async function loadTransactions(days) {
 /* ---------- LOAD ---------- */
 async function loadAll(days) {
   currentDays = days;
-  await Promise.all([loadChart(days), loadTransactions(days)]);
+  await Promise.all([loadChart(days), loadTransactions(days), loadPending()]);
 }
 
 /* ---------- FILTERS ---------- */
