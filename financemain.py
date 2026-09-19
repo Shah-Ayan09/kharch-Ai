@@ -294,6 +294,17 @@ def get_transaction(transaction_id):
         return jsonify({"error": "Not found"}), 404
     return jsonify(row)
 
+@app.route("/api/transaction/<int:transaction_id>", methods=["DELETE"])
+def delete_transaction(transaction_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM transactions WHERE id = %s", (transaction_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    print(f"🗑️ Deleted transaction #{transaction_id}")
+    return jsonify({"success": True}), 200
+
 # --- VIEW ---
 @app.route("/view")
 def view_transactions():
@@ -325,20 +336,24 @@ def dashboard():
 # --- API TRANSACTIONS ---
 @app.route("/api/transactions")
 def api_transactions():
+    """Return recent transactions for the dashboard list."""
+    
     days = request.args.get('days', default=30, type=int)
     cutoff_date = datetime.now() - timedelta(days=days)
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+    
     cur.execute("""
-        SELECT date, time, amount, category
+        SELECT id, date, time, amount, category
         FROM transactions
         WHERE date >= %s
         AND category IS NOT NULL
         ORDER BY id DESC
         LIMIT 50
     """, (cutoff_str,))
+    
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -346,11 +361,13 @@ def api_transactions():
     transactions = []
     for row in rows:
         transactions.append({
+            "id": row["id"],
             "date": row["date"],
             "time": row["time"],
             "amount": row["amount"],
             "category": row["category"]
         })
+    
     return jsonify(transactions)
 
 # --- ADD TRANSACTION ---

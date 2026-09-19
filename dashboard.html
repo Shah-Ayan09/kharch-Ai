@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-<meta name="theme-color" content="#09090B" />
+<meta name="theme-color" content="#0B0E14" />
 <link rel="manifest" href="/manifest.json" />
 <title>Kharch AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,27 +12,30 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root {
-    --bg: #09090B;
-    --bg-elevated: #111113;
-    --bg-subtle: #17171A;
-    --border: #232326;
-    --border-strong: #2E2E32;
-    --fg: #FAFAFA;
-    --fg-muted: #A1A1AA;
-    --fg-subtle: #71717A;
+    --bg: #0B0E14;
+    --bg-elevated: #131822;
+    --bg-subtle: #1A2029;
+    --border: #222A36;
+    --border-strong: #2E3846;
+    --fg: #F5F6F8;
+    --fg-muted: #8E8E93;
+    --fg-subtle: #5A6472;
     --accent: #2563EB;
     --accent-hover: #1D4ED8;
     --accent-fg: #FFFFFF;
-    --success: #16A34A;
-    --danger: #DC2626;
-    --warning: #D97706;
+
+    /* Category palette — used for pills, chart, glow */
+    --c-food: #F97316;
+    --c-fuel: #22C55E;
+    --c-groceries: #14B8A6;
+    --c-entertainment: #A855F7;
+    --c-shopping: #EC4899;
+    --c-bills: #F59E0B;
+    --c-transfer: #64748B;
+    --c-other: #3B82F6;
   }
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
     height: 100%;
@@ -45,12 +48,8 @@
     text-rendering: optimizeLegibility;
   }
 
-  button {
-    font-family: inherit;
-    cursor: pointer;
-  }
+  button { font-family: inherit; cursor: pointer; }
 
-  /* ---------- LAYOUT ---------- */
   .app {
     max-width: 480px;
     width: 100%;
@@ -70,11 +69,7 @@
     flex-shrink: 0;
   }
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .brand { display: flex; align-items: center; gap: 10px; }
 
   .brand-mark {
     width: 32px;
@@ -96,124 +91,50 @@
     color: var(--fg);
   }
 
-  .pending {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.pending.hidden {
-  display: none;
-}
-.pending-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.pending-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--fg);
-  letter-spacing: -0.005em;
-}
-.pending-count {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--accent);
-  background: rgba(37, 99, 235, 0.12);
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-.pending-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.pending-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--fg);
-  text-decoration: none;
-  transition: background 150ms ease, border-color 150ms ease;
-}
-.pending-item:hover {
-  background: var(--bg-subtle);
-  border-color: var(--border-strong);
-}
-.pending-item:active {
-  transform: scale(0.99);
-}
-.pending-amt {
-  font-size: 14px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  letter-spacing: -0.01em;
-}
-.pending-meta {
-  font-size: 12px;
-  color: var(--fg-subtle);
-  font-variant-numeric: tabular-nums;
-  margin-left: auto;
-  font-family: 'Geist Mono', ui-monospace, monospace;
-}
-.pending-arrow {
-  color: var(--fg-subtle);
-  flex-shrink: 0;
-}
+  .header-actions { display: flex; gap: 8px; }
 
   .icon-btn {
     width: 40px;
     height: 40px;
-    border-radius: 8px;
-    background: transparent;
-    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--fg-muted);
     display: grid;
     place-items: center;
     transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
   }
   .icon-btn:hover {
-    background: var(--bg-subtle);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--fg);
     border-color: var(--border-strong);
   }
-  .icon-btn:active {
-    transform: scale(0.98);
-  }
-  .icon-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+  .icon-btn:active { transform: scale(0.97); }
+  .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .icon-btn.active {
+    background: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #F87171;
   }
 
-  /* ---------- SCROLL AREA ---------- */
+  /* ---------- SCROLL ---------- */
   .scroll {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0 20px 24px;
+    padding: 0 20px 32px;
   }
-  .scroll::-webkit-scrollbar {
-    width: 0;
-    background: transparent;
-  }
+  .scroll::-webkit-scrollbar { width: 0; background: transparent; }
 
   /* ---------- FILTERS ---------- */
   .filters {
     display: flex;
     gap: 6px;
     padding: 4px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
     margin-bottom: 24px;
   }
 
@@ -226,29 +147,25 @@
     font-size: 13px;
     font-weight: 500;
     letter-spacing: -0.005em;
-    border-radius: 7px;
+    border-radius: 9px;
     transition: background 150ms ease, color 150ms ease;
     min-height: 36px;
   }
-  .filter-btn:hover {
-    color: var(--fg);
-  }
+  .filter-btn:hover { color: var(--fg); }
   .filter-btn.active {
-    background: var(--bg-subtle);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--fg);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   }
-  .filter-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
+  .filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-  /* ---------- RING (centered) ---------- */
+  /* ---------- RING SECTION ---------- */
   .ring-section {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 8px 0 28px;
+    position: relative;
   }
 
   .ring-wrap {
@@ -256,7 +173,28 @@
     width: 240px;
     height: 240px;
   }
+
+  /* Always-on soft radial glow behind the ring */
+  .ring-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at center,
+      rgba(59, 130, 246, 0.18) 0%,
+      rgba(168, 85, 247, 0.10) 35%,
+      rgba(236, 72, 153, 0.06) 60%,
+      transparent 75%
+    );
+    filter: blur(20px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .ring-wrap canvas {
+    position: relative;
+    z-index: 1;
     width: 100% !important;
     height: 100% !important;
     display: block;
@@ -272,6 +210,7 @@
     justify-content: center;
     pointer-events: none;
     text-align: center;
+    z-index: 2;
   }
 
   .ring-label {
@@ -296,9 +235,9 @@
     margin-top: 20px;
     min-height: 44px;
     padding: 10px 16px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -308,19 +247,9 @@
     pointer-events: none;
     max-width: 100%;
   }
-  .tooltip.visible {
-    opacity: 1;
-  }
-  .tooltip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-  .tooltip-name {
-    color: var(--fg-muted);
-    font-weight: 500;
-  }
+  .tooltip.visible { opacity: 1; }
+  .tooltip-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .tooltip-name { color: var(--fg-muted); font-weight: 500; }
   .tooltip-amount {
     color: var(--fg);
     font-weight: 600;
@@ -333,7 +262,7 @@
     font-size: 13px;
   }
 
-  /* ---------- SECTION HEADER ---------- */
+  /* ---------- SECTION HEAD ---------- */
   .section-head {
     display: flex;
     align-items: baseline;
@@ -341,14 +270,12 @@
     margin-bottom: 12px;
     padding: 0 2px;
   }
-
   .section-title {
     font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.01em;
     color: var(--fg);
   }
-
   .section-meta {
     font-size: 12px;
     color: var(--fg-subtle);
@@ -359,39 +286,48 @@
   .tx-list {
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--border);
+    gap: 8px;
   }
 
   .tx-row {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px 2px;
-    border-bottom: 1px solid var(--border);
-    transition: background 120ms ease;
+    padding: 16px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    transition: background 150ms ease;
   }
-  .tx-row:active {
-    background: var(--bg-elevated);
-  }
+  .tx-row:active { background: rgba(255, 255, 255, 0.06); }
 
+  /* Category pill with 15% tint of its category color */
   .tx-badge {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: var(--bg-subtle);
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
     display: grid;
     place-items: center;
-    font-size: 16px;
+    font-size: 17px;
     flex-shrink: 0;
-    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg);
   }
+  .tx-badge[data-cat="Food"]          { background: rgba(249, 115, 22, 0.15); }
+  .tx-badge[data-cat="Fuel"]          { background: rgba(34, 197, 94, 0.15); }
+  .tx-badge[data-cat="Groceries"]     { background: rgba(20, 184, 166, 0.15); }
+  .tx-badge[data-cat="Entertainment"] { background: rgba(168, 85, 247, 0.15); }
+  .tx-badge[data-cat="Shopping"]      { background: rgba(236, 72, 153, 0.15); }
+  .tx-badge[data-cat="Bills"]         { background: rgba(245, 158, 11, 0.15); }
+  .tx-badge[data-cat="Transfer"]      { background: rgba(100, 116, 139, 0.15); }
+  .tx-badge[data-cat="Other"]         { background: rgba(59, 130, 246, 0.15); }
 
   .tx-info {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
   }
 
   .tx-cat {
@@ -406,13 +342,12 @@
 
   .tx-time {
     font-size: 12px;
-    color: var(--fg-subtle);
+    color: var(--fg-muted);
     font-variant-numeric: tabular-nums;
-    font-family: 'Geist Mono', ui-monospace, monospace;
   }
 
   .tx-amt {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--fg);
     font-variant-numeric: tabular-nums;
@@ -420,34 +355,49 @@
     flex-shrink: 0;
   }
 
-  /* ---------- EMPTY / LOADING ---------- */
+  /* Remove button — appears only in remove mode */
+  .tx-remove {
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    color: #F87171;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: transform 100ms ease;
+  }
+  .tx-remove:active { transform: scale(0.9); }
+  .remove-mode .tx-remove { display: grid; }
+  .remove-mode .tx-row { cursor: pointer; }
+
   .empty {
     padding: 48px 20px;
     text-align: center;
     color: var(--fg-subtle);
     font-size: 14px;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
   }
 
-  /* ---------- SUBSCRIBE BANNER ---------- */
+  /* ---------- SUBSCRIBE ---------- */
   .subscribe {
     margin-top: 24px;
     padding: 16px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     gap: 14px;
   }
-  .subscribe.hidden {
-    display: none;
-  }
-  .subscribe-body {
-    flex: 1;
-    min-width: 0;
-  }
+  .subscribe.hidden { display: none; }
+  .subscribe-body { flex: 1; min-width: 0; }
   .subscribe-title {
     font-size: 14px;
     font-weight: 600;
@@ -465,7 +415,7 @@
     background: var(--accent);
     color: var(--accent-fg);
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
     letter-spacing: -0.005em;
@@ -473,49 +423,50 @@
     min-height: 36px;
     flex-shrink: 0;
   }
-  .subscribe-btn:hover {
-    background: var(--accent-hover);
-  }
-  .subscribe-btn:active {
-    transform: scale(0.98);
-  }
-  .subscribe-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .subscribe-btn:hover { background: var(--accent-hover); }
+  .subscribe-btn:active { transform: scale(0.97); }
+  .subscribe-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ---------- MODAL ---------- */
+  /* ---------- MODAL SHEET ---------- */
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
     display: none;
     align-items: flex-end;
     justify-content: center;
     z-index: 50;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
   }
-  .overlay.open {
-    display: flex;
-  }
+  .overlay.open { display: flex; }
 
   .sheet {
     width: 100%;
     max-width: 480px;
-    background: var(--bg-elevated);
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    border-top: 1px solid var(--border);
-    padding: 20px 20px 28px;
-    max-height: 90vh;
+    background: #0F131B;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 12px 20px 28px;
+    max-height: 92vh;
     overflow-y: auto;
+    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Small drag handle */
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 auto 20px;
   }
 
   .sheet-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   .sheet-title {
     font-size: 16px;
@@ -526,120 +477,188 @@
   .sheet-close {
     width: 32px;
     height: 32px;
-    border-radius: 6px;
+    border-radius: 10px;
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--fg-muted);
     display: grid;
     place-items: center;
     font-size: 18px;
     line-height: 1;
   }
-  .sheet-close:hover {
-    background: var(--bg-subtle);
-    color: var(--fg);
-  }
+  .sheet-close:hover { background: rgba(255, 255, 255, 0.06); color: var(--fg); }
 
-  .field {
-    margin-bottom: 16px;
+  /* Hero amount input */
+  .hero-amount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 0 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 24px;
   }
-  .field label {
+  .hero-amount .prefix {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--fg-subtle);
+    letter-spacing: -0.02em;
+  }
+  .hero-amount input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--fg);
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    width: 100%;
+    max-width: 260px;
+    font-family: inherit;
+  }
+  .hero-amount input::placeholder { color: #3A3F4A; }
+
+  .field-label {
     display: block;
     font-size: 12px;
     font-weight: 500;
     color: var(--fg-muted);
-    margin-bottom: 6px;
-    letter-spacing: 0.005em;
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
   }
-  .field input,
-  .field select {
-    width: 100%;
-    padding: 11px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--fg);
-    font-size: 15px;
-    font-family: inherit;
-    transition: border-color 150ms ease;
+
+  /* Category chips — horizontal scroll */
+  .cat-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 16px;
+    margin: 0 -20px 8px;
+    padding-left: 20px;
+    padding-right: 20px;
+    scrollbar-width: none;
+  }
+  .cat-chips::-webkit-scrollbar { display: none; }
+
+  .cat-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    color: var(--fg-muted);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 150ms ease;
     min-height: 44px;
   }
-  .field input:focus,
-  .field select:focus {
-    outline: none;
-    border-color: var(--accent);
+  .cat-chip:active { transform: scale(0.96); }
+  .cat-chip.selected {
+    color: var(--fg);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
   }
-  .field input::placeholder {
-    color: var(--fg-subtle);
-  }
+  .cat-chip[data-cat="Food"].selected          { background: rgba(249, 115, 22, 0.20); border-color: rgba(249, 115, 22, 0.5); }
+  .cat-chip[data-cat="Fuel"].selected          { background: rgba(34, 197, 94, 0.20);  border-color: rgba(34, 197, 94, 0.5); }
+  .cat-chip[data-cat="Groceries"].selected     { background: rgba(20, 184, 166, 0.20); border-color: rgba(20, 184, 166, 0.5); }
+  .cat-chip[data-cat="Entertainment"].selected { background: rgba(168, 85, 247, 0.20); border-color: rgba(168, 85, 247, 0.5); }
+  .cat-chip[data-cat="Shopping"].selected      { background: rgba(236, 72, 153, 0.20); border-color: rgba(236, 72, 153, 0.5); }
+  .cat-chip[data-cat="Bills"].selected         { background: rgba(245, 158, 11, 0.20); border-color: rgba(245, 158, 11, 0.5); }
+  .cat-chip[data-cat="Transfer"].selected      { background: rgba(100, 116, 139, 0.20); border-color: rgba(100, 116, 139, 0.5); }
+  .cat-chip[data-cat="Other"].selected         { background: rgba(59, 130, 246, 0.20); border-color: rgba(59, 130, 246, 0.5); }
 
   .row-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    margin-bottom: 20px;
   }
+  .row-2 input {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: var(--fg);
+    font-size: 15px;
+    font-family: inherit;
+    min-height: 48px;
+  }
+  .row-2 input:focus { outline: none; border-color: var(--accent); }
 
   .sheet-actions {
     display: flex;
     gap: 10px;
-    margin-top: 24px;
+    margin-top: 8px;
   }
   .btn-secondary {
-    flex: 1;
-    padding: 12px;
+    padding: 14px 20px;
     background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    border: none;
     color: var(--fg-muted);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
-    min-height: 44px;
+    min-height: 52px;
+    border-radius: 14px;
   }
-  .btn-secondary:hover {
-    background: var(--bg-subtle);
-    color: var(--fg);
-  }
+  .btn-secondary:hover { color: var(--fg); }
   .btn-primary {
-    flex: 2;
-    padding: 12px;
+    flex: 1;
+    padding: 14px;
     background: var(--accent);
     border: none;
-    border-radius: 10px;
+    border-radius: 14px;
     color: var(--accent-fg);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    min-height: 44px;
+    min-height: 52px;
     transition: background 150ms ease;
+    letter-spacing: -0.005em;
   }
-  .btn-primary:hover {
-    background: var(--accent-hover);
-  }
-  .btn-primary:active {
-    transform: scale(0.99);
-  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ---------- RESPONSIVE ---------- */
   @media (max-width: 400px) {
     .ring-wrap { width: 200px; height: 200px; }
     .ring-amount { font-size: 26px; }
+    .hero-amount input { font-size: 40px; }
   }
 </style>
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="app">
 
   <header class="header">
     <div class="brand">
       <div class="brand-mark">K</div>
       <span class="brand-name">Kharch</span>
     </div>
-    <button class="icon-btn" id="addBtn" aria-label="Add transaction">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
+    <div class="header-actions">
+      <button class="icon-btn" id="removeToggle" aria-label="Toggle remove mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+          <path d="M10 11v6"></path>
+          <path d="M14 11v6"></path>
+        </svg>
+      </button>
+      <button class="icon-btn" id="addBtn" aria-label="Add transaction">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <main class="scroll">
@@ -667,14 +686,6 @@
       </div>
     </section>
 
-    <div class="pending hidden" id="pendingCard">
-  <div class="pending-head">
-    <span class="pending-title">Uncategorized</span>
-    <span class="pending-count" id="pendingCount">0</span>
-  </div>
-  <div class="pending-list" id="pendingList"></div>
-</div>
-
     <div class="section-head">
       <span class="section-title">Transactions</span>
       <span class="section-meta" id="txCount">0</span>
@@ -698,37 +709,37 @@
 
 <div class="overlay" id="overlay">
   <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+    <div class="sheet-handle"></div>
+
     <div class="sheet-head">
       <span class="sheet-title" id="sheetTitle">Add transaction</span>
       <button class="sheet-close" id="sheetClose" aria-label="Close">×</button>
     </div>
 
-    <div class="field">
-      <label for="mAmount">Amount (Rs)</label>
-      <input type="number" id="mAmount" inputmode="decimal" step="0.01" placeholder="0.00" />
+    <div class="hero-amount">
+      <span class="prefix">Rs</span>
+      <input type="number" id="mAmount" inputmode="decimal" step="0.01" placeholder="0" />
     </div>
 
-    <div class="field">
-      <label for="mCategory">Category</label>
-      <select id="mCategory">
-        <option value="Food">Food</option>
-        <option value="Fuel">Fuel</option>
-        <option value="Groceries">Groceries</option>
-        <option value="Entertainment">Entertainment</option>
-        <option value="Shopping">Shopping</option>
-        <option value="Bills">Bills</option>
-        <option value="Transfer">Transfer</option>
-        <option value="Other">Other</option>
-      </select>
+    <label class="field-label">Category</label>
+    <div class="cat-chips" id="catChips">
+      <button class="cat-chip selected" data-cat="Food">🍔 Food</button>
+      <button class="cat-chip" data-cat="Fuel">⛽ Fuel</button>
+      <button class="cat-chip" data-cat="Groceries">🛒 Groceries</button>
+      <button class="cat-chip" data-cat="Entertainment">📺 Entertainment</button>
+      <button class="cat-chip" data-cat="Shopping">🛍️ Shopping</button>
+      <button class="cat-chip" data-cat="Bills">🏠 Bills</button>
+      <button class="cat-chip" data-cat="Transfer">💸 Transfer</button>
+      <button class="cat-chip" data-cat="Other">❓ Other</button>
     </div>
 
     <div class="row-2">
       <div class="field">
-        <label for="mDate">Date</label>
+        <label class="field-label" for="mDate">Date</label>
         <input type="date" id="mDate" />
       </div>
       <div class="field">
-        <label for="mTime">Time</label>
+        <label class="field-label" for="mTime">Time</label>
         <input type="time" id="mTime" />
       </div>
     </div>
@@ -741,36 +752,10 @@
 </div>
 
 <script>
-    async function loadPending() {
-  try {
-    const res = await fetch('/api/pending');
-    const pending = await res.json();
-    const card = document.getElementById('pendingCard');
-    const list = document.getElementById('pendingList');
-    const count = document.getElementById('pendingCount');
-
-    if (!pending || pending.length === 0) {
-      card.classList.add('hidden');
-      return;
-    }
-
-    card.classList.remove('hidden');
-    count.textContent = pending.length;
-
-    list.innerHTML = pending.map(p => `
-      <a class="pending-item" href="/categorize?id=${p.id}">
-        <span class="pending-amt">Rs ${Number(p.amount).toLocaleString()}</span>
-        <span class="pending-meta">${p.date} · ${p.time}</span>
-        <span class="pending-arrow">›</span>
-      </a>
-    `).join('');
-  } catch (err) {
-    console.error('Pending error:', err);
-  }
-}
-const COLORS = ['#2563EB', '#0891B2', '#16A34A', '#D97706', '#DC2626', '#7C3AED', '#DB2777', '#059669', '#4F46E5', '#CA8A04'];
+const COLORS = ['#F97316', '#22C55E', '#14B8A6', '#A855F7', '#EC4899', '#F59E0B', '#64748B', '#3B82F6'];
 let chart = null;
 let currentDays = 30;
+let removeMode = false;
 
 const CAT_EMOJI = {
   Food: '🍔', Fuel: '⛽', Groceries: '🛒', Entertainment: '📺',
@@ -791,6 +776,35 @@ function fmtRs(n) {
 
 function emojiFor(cat) {
   return CAT_EMOJI[cat] || '📌';
+}
+
+/* Human-friendly date formatting */
+function fmtWhen(dateStr, timeStr) {
+  // dateStr expected as YYYY-MM-DD; timeStr as HH:MM
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const [hh, mm] = timeStr.split(':').map(Number);
+    const dt = new Date(y, m - 1, d, hh, mm);
+    const now = new Date();
+
+    const sameDay = (a, b) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+
+    const t = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+    if (sameDay(dt, now)) return `Today, ${t}`;
+    if (sameDay(dt, yesterday)) return `Yesterday, ${t}`;
+
+    const datePart = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return `${datePart}, ${t}`;
+  } catch (e) {
+    return `${dateStr} · ${timeStr}`;
+  }
 }
 
 /* ---------- CHART ---------- */
@@ -835,7 +849,7 @@ async function loadChart(days) {
           datasets: [{
             data: data.values,
             backgroundColor: data.labels.map((_, i) => COLORS[i % COLORS.length]),
-            borderColor: '#111113',
+            borderColor: '#0B0E14',
             borderWidth: 3,
             hoverOffset: 8
           }]
@@ -882,24 +896,47 @@ async function loadTransactions(days) {
 
     list.innerHTML = tx.map(t => `
       <div class="tx-row">
-        <div class="tx-badge">${emojiFor(t.category)}</div>
+        <div class="tx-badge" data-cat="${t.category || 'Other'}">${emojiFor(t.category)}</div>
         <div class="tx-info">
           <div class="tx-cat">${t.category || 'Uncategorized'}</div>
-          <div class="tx-time">${t.date} · ${t.time}</div>
+          <div class="tx-time">${fmtWhen(t.date, t.time)}</div>
         </div>
         <div class="tx-amt">${fmtRs(t.amount)}</div>
+        <button class="tx-remove" data-id="${t.id}" aria-label="Remove transaction">×</button>
       </div>
     `).join('');
+
+    // Wire up delete buttons
+    list.querySelectorAll('.tx-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteTransaction(btn.dataset.id);
+      });
+    });
   } catch (err) {
     console.error('Tx error:', err);
     list.innerHTML = '<div class="empty">Could not load</div>';
   }
 }
 
+async function deleteTransaction(id) {
+  if (!confirm('Delete this transaction?')) return;
+  try {
+    const res = await fetch(`/api/transaction/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      await loadAll(currentDays);
+    } else {
+      alert('Failed to delete');
+    }
+  } catch (err) {
+    alert('Failed to delete');
+  }
+}
+
 /* ---------- LOAD ---------- */
 async function loadAll(days) {
   currentDays = days;
-  await Promise.all([loadChart(days), loadTransactions(days), loadPending()]);
+  await Promise.all([loadChart(days), loadTransactions(days)]);
 }
 
 /* ---------- FILTERS ---------- */
@@ -911,6 +948,15 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
+/* ---------- REMOVE MODE ---------- */
+const app = document.getElementById('app');
+const removeToggle = document.getElementById('removeToggle');
+removeToggle.addEventListener('click', () => {
+  removeMode = !removeMode;
+  removeToggle.classList.toggle('active', removeMode);
+  app.classList.toggle('remove-mode', removeMode);
+});
+
 /* ---------- MODAL ---------- */
 const overlay = document.getElementById('overlay');
 
@@ -919,6 +965,7 @@ function openSheet() {
   document.getElementById('mDate').value = now.toISOString().split('T')[0];
   document.getElementById('mTime').value = now.toTimeString().slice(0, 5);
   overlay.classList.add('open');
+  setTimeout(() => document.getElementById('mAmount').focus(), 100);
 }
 
 function closeSheet() {
@@ -932,9 +979,18 @@ document.getElementById('sheetCancel').addEventListener('click', closeSheet);
 overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSheet(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeSheet(); });
 
+/* Category chips */
+document.querySelectorAll('.cat-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  });
+});
+
 document.getElementById('sheetSave').addEventListener('click', async () => {
   const amount = document.getElementById('mAmount').value;
-  const category = document.getElementById('mCategory').value;
+  const selectedChip = document.querySelector('.cat-chip.selected');
+  const category = selectedChip ? selectedChip.dataset.cat : 'Other';
   const date = document.getElementById('mDate').value;
   const time = document.getElementById('mTime').value;
 

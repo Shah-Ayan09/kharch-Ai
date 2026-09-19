@@ -3,21 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-<meta name="theme-color" content="#09090B" />
+<meta name="theme-color" content="#0B0E14" />
 <title>Categorize · Kharch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #09090B;
-    --bg-elevated: #111113;
-    --bg-subtle: #17171A;
-    --border: #232326;
-    --border-strong: #2E2E32;
-    --fg: #FAFAFA;
-    --fg-muted: #A1A1AA;
-    --fg-subtle: #71717A;
+    --bg: #0B0E14;
+    --bg-elevated: #131822;
+    --border: #222A36;
+    --border-strong: #2E3846;
+    --fg: #F5F6F8;
+    --fg-muted: #8E8E93;
+    --fg-subtle: #5A6472;
     --accent: #2563EB;
     --accent-hover: #1D4ED8;
     --accent-fg: #FFFFFF;
@@ -42,10 +41,7 @@
     flex-direction: column;
   }
 
-  .header {
-    text-align: center;
-    margin-bottom: 32px;
-  }
+  .header { text-align: center; margin-bottom: 32px; }
 
   .label {
     font-size: 12px;
@@ -91,34 +87,21 @@
     align-items: center;
     gap: 10px;
     padding: 14px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
     color: var(--fg);
     font-size: 14px;
     font-weight: 500;
     font-family: inherit;
     letter-spacing: -0.005em;
     text-align: left;
-    transition: background 150ms ease, border-color 150ms ease;
+    transition: all 150ms ease;
     min-height: 52px;
-    cursor: pointer;
   }
-
-  .cat:hover {
-    background: var(--bg-subtle);
-    border-color: var(--border-strong);
-  }
-
-  .cat:active {
-    transform: scale(0.98);
-  }
-
-  .cat:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
+  .cat:hover { background: rgba(255, 255, 255, 0.06); }
+  .cat:active { transform: scale(0.98); }
+  .cat:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .cat.selected {
     background: var(--accent);
     border-color: var(--accent);
@@ -139,13 +122,13 @@
   .success-mark {
     width: 56px;
     height: 56px;
-    border-radius: 14px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.35);
     display: grid;
     place-items: center;
     margin: 0 auto 16px;
-    color: #16A34A;
+    color: #22C55E;
   }
 
   .success-title {
@@ -155,30 +138,24 @@
     letter-spacing: -0.02em;
     margin-bottom: 4px;
   }
-
   .success-sub {
     font-size: 13px;
     color: var(--fg-muted);
     margin-bottom: 24px;
   }
-
   .back-link {
     display: inline-block;
     padding: 12px 20px;
     background: var(--accent);
     color: var(--accent-fg);
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     min-height: 44px;
     line-height: 20px;
   }
-
-  .back-link:hover {
-    background: var(--accent-hover);
-  }
-
+  .back-link:hover { background: var(--accent-hover); }
   .hidden { display: none; }
 </style>
 </head>
@@ -230,19 +207,15 @@
       document.getElementById('loading').textContent = 'No transaction id';
       return;
     }
-
     try {
       const res = await fetch(`/api/transaction/${txId}`);
       const tx = await res.json();
-
       if (tx.error) {
         document.getElementById('loading').textContent = 'Transaction not found';
         return;
       }
-
       document.getElementById('amount').textContent = 'Rs ' + Number(tx.amount).toLocaleString();
       document.getElementById('meta').textContent = `${tx.date} · ${tx.time}`;
-
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('categorize').classList.remove('hidden');
     } catch (err) {
@@ -254,14 +227,12 @@
     btn.addEventListener('click', async () => {
       btn.classList.add('selected');
       document.querySelectorAll('.cat').forEach(b => b.disabled = true);
-
       try {
         await fetch('/api/update_category', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ transaction_id: txId, category: btn.dataset.cat })
         });
-
         document.getElementById('categorize').classList.add('hidden');
         const success = document.getElementById('success');
         success.classList.remove('hidden');
