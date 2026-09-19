@@ -23,8 +23,8 @@
     --accent: #2563EB;
     --accent-hover: #1D4ED8;
     --accent-fg: #FFFFFF;
+    --danger: #DC2626;
 
-    /* Category palette — used for pills, chart, glow */
     --c-food: #F97316;
     --c-fuel: #22C55E;
     --c-groceries: #14B8A6;
@@ -43,9 +43,7 @@
     background: var(--bg);
     color: var(--fg);
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-feature-settings: 'ss01', 'cv01';
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
   }
 
   button { font-family: inherit; cursor: pointer; }
@@ -54,22 +52,38 @@
     max-width: 480px;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     background: var(--bg);
+    overflow: hidden;
   }
 
-  /* ---------- HEADER ---------- */
+  /* ---------- HEADER (fixed) ---------- */
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 20px 20px 16px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 10;
   }
 
-  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    padding: 4px 6px 4px 0;
+    border-radius: 10px;
+    transition: background 150ms ease;
+  }
+  .brand:hover { background: rgba(255, 255, 255, 0.04); }
+  .brand:active { transform: scale(0.98); }
+  .brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .brand-mark {
     width: 32px;
@@ -91,8 +105,6 @@
     color: var(--fg);
   }
 
-  .header-actions { display: flex; gap: 8px; }
-
   .icon-btn {
     width: 40px;
     height: 40px;
@@ -111,23 +123,68 @@
   }
   .icon-btn:active { transform: scale(0.97); }
   .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .icon-btn.active {
-    background: rgba(220, 38, 38, 0.15);
-    border-color: rgba(220, 38, 38, 0.4);
-    color: #F87171;
+
+  /* ---------- K MENU DROPDOWN ---------- */
+  .k-menu {
+    position: absolute;
+    top: 62px;
+    left: 20px;
+    min-width: 220px;
+    background: #0F131B;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    padding: 6px;
+    display: none;
+    z-index: 20;
+  }
+  .k-menu.open { display: block; }
+
+  .k-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    text-align: left;
+    transition: background 120ms ease;
+  }
+  .k-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+  .k-menu-item:active { transform: scale(0.99); }
+  .k-menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .k-menu-item.danger { color: #F87171; }
+  .k-menu-item.danger:hover { background: rgba(220, 38, 38, 0.12); }
+
+  .k-menu-icon {
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    opacity: 0.9;
+  }
+  .k-menu-item.active {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg);
+  }
+  .k-menu-item.active .k-menu-icon {
+    color: var(--accent);
+    opacity: 1;
   }
 
-  /* ---------- SCROLL ---------- */
-  .scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 0 20px 32px;
+  /* ---------- FIXED AREA (filters + ring + tooltip) ---------- */
+  .fixed-top {
+    flex-shrink: 0;
+    padding: 0 20px;
   }
-  .scroll::-webkit-scrollbar { width: 0; background: transparent; }
 
-  /* ---------- FILTERS ---------- */
   .filters {
     display: flex;
     gap: 6px;
@@ -135,7 +192,7 @@
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
 
   .filter-btn {
@@ -159,22 +216,20 @@
   }
   .filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-  /* ---------- RING SECTION ---------- */
   .ring-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 0 28px;
+    padding: 8px 0 20px;
     position: relative;
   }
 
   .ring-wrap {
     position: relative;
-    width: 240px;
-    height: 240px;
+    width: 220px;
+    height: 220px;
   }
 
-  /* Always-on soft radial glow behind the ring */
   .ring-wrap::before {
     content: '';
     position: absolute;
@@ -223,27 +278,26 @@
   }
 
   .ring-amount {
-    font-size: 30px;
+    font-size: 28px;
     font-weight: 600;
     letter-spacing: -0.03em;
     color: var(--fg);
     font-variant-numeric: tabular-nums;
   }
 
-  /* ---------- TOOLTIP ---------- */
   .tooltip {
-    margin-top: 20px;
-    min-height: 44px;
-    padding: 10px 16px;
+    margin-top: 16px;
+    min-height: 40px;
+    padding: 8px 14px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     opacity: 0;
     transition: opacity 150ms ease;
-    font-size: 14px;
+    font-size: 13px;
     pointer-events: none;
     max-width: 100%;
   }
@@ -259,16 +313,25 @@
   .tooltip-percent {
     color: var(--fg-subtle);
     font-variant-numeric: tabular-nums;
-    font-size: 13px;
+    font-size: 12px;
   }
 
-  /* ---------- SECTION HEAD ---------- */
+  /* ---------- TRANSACTION SECTION (scrollable) ---------- */
+  .tx-section {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0 20px 20px;
+  }
+
   .section-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     padding: 0 2px;
+    flex-shrink: 0;
   }
   .section-title {
     font-size: 14px;
@@ -282,18 +345,28 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* ---------- TRANSACTION LIST ---------- */
+  .tx-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tx-scroll::-webkit-scrollbar { width: 0; background: transparent; }
+
   .tx-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-bottom: 20px;
   }
 
   .tx-row {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 16px 14px;
+    gap: 12px;
+    padding: 14px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
@@ -301,7 +374,6 @@
   }
   .tx-row:active { background: rgba(255, 255, 255, 0.06); }
 
-  /* Category pill with 15% tint of its category color */
   .tx-badge {
     width: 40px;
     height: 40px;
@@ -327,7 +399,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
   }
 
   .tx-cat {
@@ -355,28 +427,38 @@
     flex-shrink: 0;
   }
 
-  /* Remove button — appears only in remove mode */
-  .tx-remove {
+  /* Action buttons on rows (only visible in respective modes) */
+  .tx-action {
     width: 32px;
     height: 32px;
     border-radius: 9999px;
-    background: rgba(220, 38, 38, 0.15);
-    border: 1px solid rgba(220, 38, 38, 0.35);
-    color: #F87171;
     display: none;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    line-height: 1;
     flex-shrink: 0;
     transition: transform 100ms ease;
   }
-  .tx-remove:active { transform: scale(0.9); }
-  .remove-mode .tx-remove { display: grid; }
-  .remove-mode .tx-row { cursor: pointer; }
+  .tx-action:active { transform: scale(0.9); }
+
+  .tx-remove {
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    color: #F87171;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .tx-move {
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    color: #60A5FA;
+  }
+
+  .app.remove-mode .tx-remove { display: grid; }
+  .app.move-mode .tx-move { display: grid; }
 
   .empty {
-    padding: 48px 20px;
+    padding: 40px 20px;
     text-align: center;
     color: var(--fg-subtle);
     font-size: 14px;
@@ -387,23 +469,22 @@
 
   /* ---------- SUBSCRIBE ---------- */
   .subscribe {
-    margin-top: 24px;
-    padding: 16px;
+    margin-top: 16px;
+    padding: 14px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
   }
   .subscribe.hidden { display: none; }
   .subscribe-body { flex: 1; min-width: 0; }
   .subscribe-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--fg);
     margin-bottom: 2px;
-    letter-spacing: -0.005em;
   }
   .subscribe-desc {
     font-size: 12px;
@@ -418,16 +499,11 @@
     border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: -0.005em;
-    transition: background 150ms ease;
     min-height: 36px;
     flex-shrink: 0;
   }
-  .subscribe-btn:hover { background: var(--accent-hover); }
-  .subscribe-btn:active { transform: scale(0.97); }
-  .subscribe-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ---------- MODAL SHEET ---------- */
+  /* ---------- SHEETS (modals) ---------- */
   .overlay {
     position: fixed;
     inset: 0;
@@ -453,7 +529,6 @@
     box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
   }
 
-  /* Small drag handle */
   .sheet-handle {
     width: 40px;
     height: 4px;
@@ -486,9 +561,7 @@
     font-size: 18px;
     line-height: 1;
   }
-  .sheet-close:hover { background: rgba(255, 255, 255, 0.06); color: var(--fg); }
 
-  /* Hero amount input */
   .hero-amount {
     display: flex;
     align-items: center;
@@ -530,7 +603,6 @@
     text-transform: uppercase;
   }
 
-  /* Category chips — horizontal scroll */
   .cat-chips {
     display: flex;
     gap: 8px;
@@ -554,18 +626,13 @@
     color: var(--fg-muted);
     font-size: 14px;
     font-weight: 500;
-    letter-spacing: -0.005em;
     white-space: nowrap;
     flex-shrink: 0;
     transition: all 150ms ease;
     min-height: 44px;
   }
   .cat-chip:active { transform: scale(0.96); }
-  .cat-chip.selected {
-    color: var(--fg);
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.08);
-  }
+  .cat-chip.selected { color: var(--fg); border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08); }
   .cat-chip[data-cat="Food"].selected          { background: rgba(249, 115, 22, 0.20); border-color: rgba(249, 115, 22, 0.5); }
   .cat-chip[data-cat="Fuel"].selected          { background: rgba(34, 197, 94, 0.20);  border-color: rgba(34, 197, 94, 0.5); }
   .cat-chip[data-cat="Groceries"].selected     { background: rgba(20, 184, 166, 0.20); border-color: rgba(20, 184, 166, 0.5); }
@@ -621,15 +688,14 @@
     font-weight: 600;
     min-height: 52px;
     transition: background 150ms ease;
-    letter-spacing: -0.005em;
   }
   .btn-primary:hover { background: var(--accent-hover); }
   .btn-primary:active { transform: scale(0.99); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   @media (max-width: 400px) {
-    .ring-wrap { width: 200px; height: 200px; }
-    .ring-amount { font-size: 26px; }
+    .ring-wrap { width: 190px; height: 190px; }
+    .ring-amount { font-size: 24px; }
     .hero-amount input { font-size: 40px; }
   }
 </style>
@@ -639,30 +705,42 @@
 <div class="app" id="app">
 
   <header class="header">
-    <div class="brand">
+    <button class="brand" id="brandBtn" aria-label="Open menu">
       <div class="brand-mark">K</div>
       <span class="brand-name">Kharch</span>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="removeToggle" aria-label="Toggle remove mode">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6"></path>
-          <path d="M14 11v6"></path>
-        </svg>
+    </button>
+    <button class="icon-btn" id="addBtn" aria-label="Add transaction">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+
+    <div class="k-menu" id="kMenu" role="menu">
+      <button class="k-menu-item danger" id="menuRemove" role="menuitem">
+        <span class="k-menu-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+          </svg>
+        </span>
+        Remove transactions
       </button>
-      <button class="icon-btn" id="addBtn" aria-label="Add transaction">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
+      <button class="k-menu-item" id="menuMove" role="menuitem">
+        <span class="k-menu-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 7h11l-3-3"></path>
+            <path d="M17 17H6l3 3"></path>
+          </svg>
+        </span>
+        Change category
       </button>
     </div>
   </header>
 
-  <main class="scroll">
-
+  <div class="fixed-top">
     <div class="filters" role="tablist" aria-label="Time range">
       <button class="filter-btn" data-days="7" role="tab">1W</button>
       <button class="filter-btn" data-days="14" role="tab">2W</button>
@@ -685,32 +763,35 @@
         <span class="tooltip-percent" id="tooltipPercent"></span>
       </div>
     </section>
+  </div>
 
+  <div class="tx-section">
     <div class="section-head">
       <span class="section-title">Transactions</span>
       <span class="section-meta" id="txCount">0</span>
     </div>
 
-    <div class="tx-list" id="transactionList">
-      <div class="empty">Loading…</div>
-    </div>
-
-    <div class="subscribe hidden" id="subscribeCard">
-      <div class="subscribe-body">
-        <div class="subscribe-title">Enable notifications</div>
-        <div class="subscribe-desc">Get notified when a new transaction arrives so you can categorize it right away.</div>
+    <div class="tx-scroll">
+      <div class="tx-list" id="transactionList">
+        <div class="empty">Loading…</div>
       </div>
-      <button class="subscribe-btn" id="subscribeBtn">Enable</button>
-    </div>
 
-  </main>
+      <div class="subscribe hidden" id="subscribeCard">
+        <div class="subscribe-body">
+          <div class="subscribe-title">Enable notifications</div>
+          <div class="subscribe-desc">Get notified when a new transaction arrives.</div>
+        </div>
+        <button class="subscribe-btn" id="subscribeBtn">Enable</button>
+      </div>
+    </div>
+  </div>
 
 </div>
 
+<!-- Add Transaction Sheet -->
 <div class="overlay" id="overlay">
   <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
     <div class="sheet-handle"></div>
-
     <div class="sheet-head">
       <span class="sheet-title" id="sheetTitle">Add transaction</span>
       <button class="sheet-close" id="sheetClose" aria-label="Close">×</button>
@@ -734,11 +815,11 @@
     </div>
 
     <div class="row-2">
-      <div class="field">
+      <div>
         <label class="field-label" for="mDate">Date</label>
         <input type="date" id="mDate" />
       </div>
-      <div class="field">
+      <div>
         <label class="field-label" for="mTime">Time</label>
         <input type="time" id="mTime" />
       </div>
@@ -751,11 +832,46 @@
   </div>
 </div>
 
+<!-- Change Category Sheet -->
+<div class="overlay" id="moveOverlay">
+  <div class="sheet" role="dialog">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-title" id="moveTitle">Change category</span>
+      <button class="sheet-close" id="moveClose" aria-label="Close">×</button>
+    </div>
+
+    <div style="margin-bottom: 8px;">
+      <div style="font-size: 13px; color: var(--fg-muted); margin-bottom: 4px;">Transaction</div>
+      <div style="font-size: 22px; font-weight: 600; color: var(--fg); letter-spacing: -0.02em;" id="moveAmount">Rs 0</div>
+      <div style="font-size: 12px; color: var(--fg-subtle); margin-top: 2px;" id="moveMeta">—</div>
+    </div>
+
+    <label class="field-label" style="margin-top: 20px;">New category</label>
+    <div class="cat-chips" id="moveCatChips">
+      <button class="cat-chip" data-cat="Food">🍔 Food</button>
+      <button class="cat-chip" data-cat="Fuel">⛽ Fuel</button>
+      <button class="cat-chip" data-cat="Groceries">🛒 Groceries</button>
+      <button class="cat-chip" data-cat="Entertainment">📺 Entertainment</button>
+      <button class="cat-chip" data-cat="Shopping">🛍️ Shopping</button>
+      <button class="cat-chip" data-cat="Bills">🏠 Bills</button>
+      <button class="cat-chip" data-cat="Transfer">💸 Transfer</button>
+      <button class="cat-chip" data-cat="Other">❓ Other</button>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-secondary" id="moveCancel">Cancel</button>
+      <button class="btn-primary" id="moveSave">Change category</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const COLORS = ['#F97316', '#22C55E', '#14B8A6', '#A855F7', '#EC4899', '#F59E0B', '#64748B', '#3B82F6'];
 let chart = null;
 let currentDays = 30;
 let removeMode = false;
+let moveMode = false;
 
 const CAT_EMOJI = {
   Food: '🍔', Fuel: '⛽', Groceries: '🛒', Entertainment: '📺',
@@ -764,9 +880,7 @@ const CAT_EMOJI = {
 
 /* ---------- SERVICE WORKER ---------- */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(r => console.log('SW registered'))
-    .catch(e => console.log('SW failed', e));
+  navigator.serviceWorker.register('/service-worker.js').catch(e => console.log(e));
 }
 
 /* ---------- HELPERS ---------- */
@@ -778,9 +892,7 @@ function emojiFor(cat) {
   return CAT_EMOJI[cat] || '📌';
 }
 
-/* Human-friendly date formatting */
 function fmtWhen(dateStr, timeStr) {
-  // dateStr expected as YYYY-MM-DD; timeStr as HH:MM
   try {
     const [y, m, d] = dateStr.split('-').map(Number);
     const [hh, mm] = timeStr.split(':').map(Number);
@@ -794,44 +906,57 @@ function fmtWhen(dateStr, timeStr) {
 
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
-
     const t = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 
     if (sameDay(dt, now)) return `Today, ${t}`;
     if (sameDay(dt, yesterday)) return `Yesterday, ${t}`;
-
-    const datePart = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    return `${datePart}, ${t}`;
+    return `${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${t}`;
   } catch (e) {
     return `${dateStr} · ${timeStr}`;
   }
 }
 
-/* ---------- CHART ---------- */
+/* ---------- CHART + TOOLTIP TOGGLE ---------- */
 const tooltipEl = document.getElementById('tooltip');
 const tooltipDot = document.getElementById('tooltipDot');
 const tooltipName = document.getElementById('tooltipName');
 const tooltipAmount = document.getElementById('tooltipAmount');
 const tooltipPercent = document.getElementById('tooltipPercent');
 
-function showTooltip(label, value, total, index) {
+let activeIndex = null;
+
+function showTooltip(index) {
+  if (!chart) return;
+  const label = chart.data.labels[index];
+  const value = chart.data.datasets[0].data[index];
+  const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
   const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+
   tooltipDot.style.background = COLORS[index % COLORS.length];
   tooltipName.textContent = label;
   tooltipAmount.textContent = fmtRs(value);
   tooltipPercent.textContent = pct + '%';
   tooltipEl.classList.add('visible');
+  activeIndex = index;
 }
 
 function hideTooltip() {
   tooltipEl.classList.remove('visible');
+  activeIndex = null;
+}
+
+function toggleTooltip(index) {
+  if (activeIndex === index) {
+    hideTooltip();
+  } else {
+    showTooltip(index);
+  }
 }
 
 async function loadChart(days) {
   try {
     const res = await fetch(`/api/spending?days=${days}`);
     const data = await res.json();
-
     document.getElementById('totalAmount').textContent = fmtRs(data.total);
 
     const ctx = document.getElementById('spendingChart').getContext('2d');
@@ -862,11 +987,9 @@ async function loadChart(days) {
             legend: { display: false },
             tooltip: { enabled: false }
           },
-          onHover: (evt, els) => {
+          onClick: (evt, els) => {
             if (els.length > 0) {
-              const i = els[0].index;
-              const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-              showTooltip(chart.data.labels[i], chart.data.datasets[0].data[i], total, i);
+              toggleTooltip(els[0].index);
             } else {
               hideTooltip();
             }
@@ -875,17 +998,20 @@ async function loadChart(days) {
       });
     }
   } catch (err) {
-    console.error('Chart error:', err);
+    console.error(err);
     document.getElementById('totalAmount').textContent = 'Err';
   }
 }
 
 /* ---------- TRANSACTIONS ---------- */
+let currentTx = [];
+
 async function loadTransactions(days) {
   const list = document.getElementById('transactionList');
   try {
     const res = await fetch(`/api/transactions?days=${days}`);
     const tx = await res.json();
+    currentTx = tx;
 
     document.getElementById('txCount').textContent = tx.length + (tx.length === 1 ? ' entry' : ' entries');
 
@@ -895,26 +1021,37 @@ async function loadTransactions(days) {
     }
 
     list.innerHTML = tx.map(t => `
-      <div class="tx-row">
+      <div class="tx-row" data-id="${t.id}">
         <div class="tx-badge" data-cat="${t.category || 'Other'}">${emojiFor(t.category)}</div>
         <div class="tx-info">
           <div class="tx-cat">${t.category || 'Uncategorized'}</div>
           <div class="tx-time">${fmtWhen(t.date, t.time)}</div>
         </div>
         <div class="tx-amt">${fmtRs(t.amount)}</div>
-        <button class="tx-remove" data-id="${t.id}" aria-label="Remove transaction">×</button>
+        <button class="tx-action tx-remove" data-id="${t.id}" aria-label="Remove">×</button>
+        <button class="tx-action tx-move" data-id="${t.id}" aria-label="Change category">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
       </div>
     `).join('');
 
-    // Wire up delete buttons
     list.querySelectorAll('.tx-remove').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         deleteTransaction(btn.dataset.id);
       });
     });
+
+    list.querySelectorAll('.tx-move').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMoveSheet(btn.dataset.id);
+      });
+    });
   } catch (err) {
-    console.error('Tx error:', err);
+    console.error(err);
     list.innerHTML = '<div class="empty">Could not load</div>';
   }
 }
@@ -933,6 +1070,72 @@ async function deleteTransaction(id) {
   }
 }
 
+/* ---------- MOVE / CHANGE CATEGORY ---------- */
+const moveOverlay = document.getElementById('moveOverlay');
+let moveTxId = null;
+
+function openMoveSheet(id) {
+  const tx = currentTx.find(t => String(t.id) === String(id));
+  if (!tx) return;
+  moveTxId = id;
+
+  document.getElementById('moveAmount').textContent = fmtRs(tx.amount);
+  document.getElementById('moveMeta').textContent = fmtWhen(tx.date, tx.time);
+
+  document.querySelectorAll('#moveCatChips .cat-chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.cat === tx.category);
+  });
+
+  moveOverlay.classList.add('open');
+}
+
+function closeMoveSheet() {
+  moveOverlay.classList.remove('open');
+  moveTxId = null;
+}
+
+document.getElementById('moveClose').addEventListener('click', closeMoveSheet);
+document.getElementById('moveCancel').addEventListener('click', closeMoveSheet);
+moveOverlay.addEventListener('click', (e) => { if (e.target === moveOverlay) closeMoveSheet(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (moveOverlay.classList.contains('open')) closeMoveSheet();
+    if (overlay.classList.contains('open')) closeSheet();
+    if (kMenu.classList.contains('open')) closeKMenu();
+  }
+});
+
+document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#moveCatChips .cat-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  });
+});
+
+document.getElementById('moveSave').addEventListener('click', async () => {
+  const sel = document.querySelector('#moveCatChips .cat-chip.selected');
+  if (!sel || !moveTxId) return;
+
+  const btn = document.getElementById('moveSave');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    await fetch('/api/update_category', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: moveTxId, category: sel.dataset.cat })
+    });
+    closeMoveSheet();
+    await loadAll(currentDays);
+  } catch (err) {
+    alert('Failed to change');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Change category';
+  }
+});
+
 /* ---------- LOAD ---------- */
 async function loadAll(days) {
   currentDays = days;
@@ -948,16 +1151,59 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-/* ---------- REMOVE MODE ---------- */
+/* ---------- K MENU ---------- */
 const app = document.getElementById('app');
-const removeToggle = document.getElementById('removeToggle');
-removeToggle.addEventListener('click', () => {
-  removeMode = !removeMode;
-  removeToggle.classList.toggle('active', removeMode);
-  app.classList.toggle('remove-mode', removeMode);
+const kMenu = document.getElementById('kMenu');
+const brandBtn = document.getElementById('brandBtn');
+const menuRemove = document.getElementById('menuRemove');
+const menuMove = document.getElementById('menuMove');
+
+function openKMenu() {
+  kMenu.classList.add('open');
+  menuRemove.classList.toggle('active', removeMode);
+  menuMove.classList.toggle('active', moveMode);
+}
+
+function closeKMenu() {
+  kMenu.classList.remove('open');
+}
+
+brandBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (kMenu.classList.contains('open')) {
+    closeKMenu();
+  } else {
+    openKMenu();
+  }
 });
 
-/* ---------- MODAL ---------- */
+document.addEventListener('click', (e) => {
+  if (kMenu.classList.contains('open') && !kMenu.contains(e.target) && !brandBtn.contains(e.target)) {
+    closeKMenu();
+  }
+});
+
+menuRemove.addEventListener('click', () => {
+  removeMode = !removeMode;
+  moveMode = false;
+  app.classList.toggle('remove-mode', removeMode);
+  app.classList.toggle('move-mode', moveMode);
+  menuRemove.classList.toggle('active', removeMode);
+  menuMove.classList.toggle('active', moveMode);
+  closeKMenu();
+});
+
+menuMove.addEventListener('click', () => {
+  moveMode = !moveMode;
+  removeMode = false;
+  app.classList.toggle('move-mode', moveMode);
+  app.classList.toggle('remove-mode', removeMode);
+  menuMove.classList.toggle('active', moveMode);
+  menuRemove.classList.toggle('active', removeMode);
+  closeKMenu();
+});
+
+/* ---------- ADD SHEET ---------- */
 const overlay = document.getElementById('overlay');
 
 function openSheet() {
@@ -977,20 +1223,18 @@ document.getElementById('addBtn').addEventListener('click', openSheet);
 document.getElementById('sheetClose').addEventListener('click', closeSheet);
 document.getElementById('sheetCancel').addEventListener('click', closeSheet);
 overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSheet(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeSheet(); });
 
-/* Category chips */
-document.querySelectorAll('.cat-chip').forEach(chip => {
+document.querySelectorAll('#catChips .cat-chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('#catChips .cat-chip').forEach(c => c.classList.remove('selected'));
     chip.classList.add('selected');
   });
 });
 
 document.getElementById('sheetSave').addEventListener('click', async () => {
   const amount = document.getElementById('mAmount').value;
-  const selectedChip = document.querySelector('.cat-chip.selected');
-  const category = selectedChip ? selectedChip.dataset.cat : 'Other';
+  const sel = document.querySelector('#catChips .cat-chip.selected');
+  const category = sel ? sel.dataset.cat : 'Other';
   const date = document.getElementById('mDate').value;
   const time = document.getElementById('mTime').value;
 
@@ -1039,21 +1283,16 @@ function urlBase64ToUint8Array(base64String) {
 
 async function initPush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
   const reg = await navigator.serviceWorker.ready;
   const existing = await reg.pushManager.getSubscription();
-
   if (existing) {
     subscribeCard.classList.add('hidden');
     return;
   }
-
   subscribeCard.classList.remove('hidden');
-
   subscribeBtn.addEventListener('click', async () => {
     subscribeBtn.disabled = true;
     subscribeBtn.textContent = 'Enabling…';
-
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
@@ -1061,24 +1300,20 @@ async function initPush() {
         subscribeBtn.textContent = 'Enable';
         return;
       }
-
       const keyRes = await fetch('/vapid-public-key');
       const keyData = await keyRes.json();
-
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
       });
-
       await fetch('/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sub)
       });
-
       subscribeCard.classList.add('hidden');
     } catch (err) {
-      console.error('Push subscribe failed:', err);
+      console.error(err);
       subscribeBtn.disabled = false;
       subscribeBtn.textContent = 'Enable';
     }
