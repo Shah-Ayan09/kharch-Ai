@@ -1,0 +1,5 @@
+Flask
+requests
+slack_sdk
+gunicorn
+psycopg2-binary
