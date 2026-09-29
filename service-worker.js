@@ -4,9 +4,20 @@
 // Bump this number whenever you want to force a cache refresh
 const CACHE_VERSION = 'v3';
 
+const CACHE_VERSION = 'v4';
+
 self.addEventListener('install', (event) => {
     console.log('✅ Service Worker installed', CACHE_VERSION);
     self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    console.log('✅ Service Worker activated', CACHE_VERSION);
+    event.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(keys.map(k => caches.delete(k)))
+        ).then(() => clients.claim())
+    );
 });
 
 self.addEventListener('activate', (event) => {
