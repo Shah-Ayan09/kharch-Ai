@@ -26,7 +26,7 @@
     --danger: #DC2626;
 
     --c-food: #F97316;
-    --c-fuel: #22C55E;
+    --c-mart: #22C55E;
     --c-groceries: #14B8A6;
     --c-entertainment: #A855F7;
     --c-shopping: #EC4899;
@@ -44,6 +44,9 @@
     color: var(--fg);
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   button { font-family: inherit; cursor: pointer; }
@@ -58,9 +61,10 @@
     flex-direction: column;
     background: var(--bg);
     overflow: hidden;
+    position: relative;
   }
 
-  /* ---------- HEADER (fixed) ---------- */
+  /* ---------- HEADER ---------- */
   .header {
     display: flex;
     align-items: center;
@@ -83,7 +87,6 @@
   }
   .brand:hover { background: rgba(255, 255, 255, 0.04); }
   .brand:active { transform: scale(0.98); }
-  .brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .brand-mark {
     width: 32px;
@@ -105,6 +108,12 @@
     color: var(--fg);
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .icon-btn {
     width: 40px;
     height: 40px;
@@ -115,6 +124,7 @@
     display: grid;
     place-items: center;
     transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+    position: relative;
   }
   .icon-btn:hover {
     background: rgba(255, 255, 255, 0.06);
@@ -123,6 +133,32 @@
   }
   .icon-btn:active { transform: scale(0.97); }
   .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Red dot on inbox icon */
+  .icon-btn .badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: 2px solid var(--bg);
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  .icon-btn.has-pending .badge {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .icon-btn.pulse .badge {
+    animation: pulse 1s ease-in-out 6;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    50% { transform: scale(1.3); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+  }
 
   /* ---------- K MENU DROPDOWN ---------- */
   .k-menu {
@@ -152,16 +188,13 @@
     color: var(--fg);
     font-size: 14px;
     font-weight: 500;
-    letter-spacing: -0.005em;
     text-align: left;
     transition: background 120ms ease;
   }
   .k-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
   .k-menu-item:active { transform: scale(0.99); }
-  .k-menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .k-menu-item.danger { color: #F87171; }
   .k-menu-item.danger:hover { background: rgba(220, 38, 38, 0.12); }
-
   .k-menu-icon {
     width: 20px;
     height: 20px;
@@ -170,16 +203,8 @@
     flex-shrink: 0;
     opacity: 0.9;
   }
-  .k-menu-item.active {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--fg);
-  }
-  .k-menu-item.active .k-menu-icon {
-    color: var(--accent);
-    opacity: 1;
-  }
 
-  /* ---------- FIXED AREA (filters + ring + tooltip) ---------- */
+  /* ---------- FIXED TOP ---------- */
   .fixed-top {
     flex-shrink: 0;
     padding: 0 20px;
@@ -203,7 +228,6 @@
     color: var(--fg-subtle);
     font-size: 13px;
     font-weight: 500;
-    letter-spacing: -0.005em;
     border-radius: 9px;
     transition: background 150ms ease, color 150ms ease;
     min-height: 36px;
@@ -214,7 +238,6 @@
     color: var(--fg);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   }
-  .filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   .ring-section {
     display: flex;
@@ -316,7 +339,7 @@
     font-size: 12px;
   }
 
-  /* ---------- TRANSACTION SECTION (scrollable) ---------- */
+  /* ---------- TRANSACTION SECTION ---------- */
   .tx-section {
     flex: 1 1 auto;
     min-height: 0;
@@ -336,7 +359,6 @@
   .section-title {
     font-size: 14px;
     font-weight: 600;
-    letter-spacing: -0.01em;
     color: var(--fg);
   }
   .section-meta {
@@ -370,9 +392,11 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    transition: background 150ms ease;
+    transition: background 150ms ease, transform 100ms ease;
+    position: relative;
   }
   .tx-row:active { background: rgba(255, 255, 255, 0.06); }
+  .tx-row.pressing { transform: scale(0.98); }
 
   .tx-badge {
     width: 40px;
@@ -384,9 +408,13 @@
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.06);
     color: var(--fg);
+    cursor: pointer;
+    transition: transform 100ms ease;
   }
+  .tx-badge:active { transform: scale(0.94); }
+
   .tx-badge[data-cat="Food"]          { background: rgba(249, 115, 22, 0.15); }
-  .tx-badge[data-cat="Fuel"]          { background: rgba(34, 197, 94, 0.15); }
+  .tx-badge[data-cat="Mart"]          { background: rgba(34, 197, 94, 0.15); }
   .tx-badge[data-cat="Groceries"]     { background: rgba(20, 184, 166, 0.15); }
   .tx-badge[data-cat="Entertainment"] { background: rgba(168, 85, 247, 0.15); }
   .tx-badge[data-cat="Shopping"]      { background: rgba(236, 72, 153, 0.15); }
@@ -406,7 +434,6 @@
     font-size: 14px;
     font-weight: 500;
     color: var(--fg);
-    letter-spacing: -0.005em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -423,11 +450,9 @@
     font-weight: 600;
     color: var(--fg);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
     flex-shrink: 0;
   }
 
-  /* Action buttons on rows (only visible in respective modes) */
   .tx-action {
     width: 32px;
     height: 32px;
@@ -503,7 +528,74 @@
     flex-shrink: 0;
   }
 
-  /* ---------- SHEETS (modals) ---------- */
+  /* ---------- CONTEXT MENU (long-press) ---------- */
+  .ctx-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+    z-index: 60;
+  }
+  .ctx-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .ctx-menu {
+    position: fixed;
+    min-width: 220px;
+    background: rgba(28, 32, 42, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    padding: 6px;
+    z-index: 70;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity 160ms ease, transform 160ms ease;
+    pointer-events: none;
+  }
+  .ctx-menu.open {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+
+  .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    transition: background 120ms ease;
+    min-height: 44px;
+  }
+  .ctx-item:hover { background: rgba(255, 255, 255, 0.08); }
+  .ctx-item:active { transform: scale(0.99); }
+  .ctx-item.danger { color: #F87171; }
+  .ctx-item.danger:hover { background: rgba(220, 38, 38, 0.15); }
+  .ctx-icon {
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  /* ---------- SHEETS ---------- */
   .overlay {
     position: fixed;
     inset: 0;
@@ -546,7 +638,6 @@
   .sheet-title {
     font-size: 16px;
     font-weight: 600;
-    letter-spacing: -0.01em;
     color: var(--fg);
   }
   .sheet-close {
@@ -575,7 +666,6 @@
     font-size: 28px;
     font-weight: 500;
     color: var(--fg-subtle);
-    letter-spacing: -0.02em;
   }
   .hero-amount input {
     background: transparent;
@@ -634,7 +724,7 @@
   .cat-chip:active { transform: scale(0.96); }
   .cat-chip.selected { color: var(--fg); border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08); }
   .cat-chip[data-cat="Food"].selected          { background: rgba(249, 115, 22, 0.20); border-color: rgba(249, 115, 22, 0.5); }
-  .cat-chip[data-cat="Fuel"].selected          { background: rgba(34, 197, 94, 0.20);  border-color: rgba(34, 197, 94, 0.5); }
+  .cat-chip[data-cat="Mart"].selected          { background: rgba(34, 197, 94, 0.20);  border-color: rgba(34, 197, 94, 0.5); }
   .cat-chip[data-cat="Groceries"].selected     { background: rgba(20, 184, 166, 0.20); border-color: rgba(20, 184, 166, 0.5); }
   .cat-chip[data-cat="Entertainment"].selected { background: rgba(168, 85, 247, 0.20); border-color: rgba(168, 85, 247, 0.5); }
   .cat-chip[data-cat="Shopping"].selected      { background: rgba(236, 72, 153, 0.20); border-color: rgba(236, 72, 153, 0.5); }
@@ -693,6 +783,56 @@
   .btn-primary:active { transform: scale(0.99); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  /* ---------- PENDING LIST ---------- */
+  .pending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pending-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: var(--fg);
+    text-decoration: none;
+    transition: background 150ms ease;
+  }
+  .pending-row:hover { background: rgba(255, 255, 255, 0.06); }
+  .pending-row:active { transform: scale(0.99); }
+
+  .pending-amt {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .pending-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .pending-time {
+    font-size: 12px;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .pending-hint {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .pending-arrow {
+    color: var(--fg-subtle);
+    flex-shrink: 0;
+  }
+
   @media (max-width: 400px) {
     .ring-wrap { width: 190px; height: 190px; }
     .ring-amount { font-size: 24px; }
@@ -709,12 +849,25 @@
       <div class="brand-mark">K</div>
       <span class="brand-name">Kharch</span>
     </button>
-    <button class="icon-btn" id="addBtn" aria-label="Add transaction">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
+
+    <div class="header-actions">
+      <!-- Inbox / pending transactions button -->
+      <button class="icon-btn" id="inboxBtn" aria-label="Uncategorized transactions">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+          <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+        </svg>
+        <span class="badge"></span>
+      </button>
+
+      <!-- Add transaction -->
+      <button class="icon-btn" id="addBtn" aria-label="Add transaction">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
 
     <div class="k-menu" id="kMenu" role="menu">
       <button class="k-menu-item danger" id="menuRemove" role="menuitem">
@@ -741,7 +894,7 @@
   </header>
 
   <div class="fixed-top">
-    <div class="filters" role="tablist" aria-label="Time range">
+    <div class="filters" role="tablist">
       <button class="filter-btn" data-days="7" role="tab">1W</button>
       <button class="filter-btn" data-days="14" role="tab">2W</button>
       <button class="filter-btn active" data-days="30" role="tab">4W</button>
@@ -788,12 +941,35 @@
 
 </div>
 
+<!-- Long-press context menu -->
+<div class="ctx-backdrop" id="ctxBackdrop"></div>
+<div class="ctx-menu" id="ctxMenu">
+  <button class="ctx-item" id="ctxChange">
+    <span class="ctx-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 7h11l-3-3"></path>
+        <path d="M17 17H6l3 3"></path>
+      </svg>
+    </span>
+    Change category
+  </button>
+  <button class="ctx-item danger" id="ctxRemove">
+    <span class="ctx-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+      </svg>
+    </span>
+    Remove transaction
+  </button>
+</div>
+
 <!-- Add Transaction Sheet -->
 <div class="overlay" id="overlay">
-  <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+  <div class="sheet" role="dialog">
     <div class="sheet-handle"></div>
     <div class="sheet-head">
-      <span class="sheet-title" id="sheetTitle">Add transaction</span>
+      <span class="sheet-title">Add transaction</span>
       <button class="sheet-close" id="sheetClose" aria-label="Close">×</button>
     </div>
 
@@ -837,7 +1013,7 @@
   <div class="sheet" role="dialog">
     <div class="sheet-handle"></div>
     <div class="sheet-head">
-      <span class="sheet-title" id="moveTitle">Change category</span>
+      <span class="sheet-title">Change category</span>
       <button class="sheet-close" id="moveClose" aria-label="Close">×</button>
     </div>
 
@@ -866,6 +1042,21 @@
   </div>
 </div>
 
+<!-- Pending Transactions Sheet -->
+<div class="overlay" id="pendingOverlay">
+  <div class="sheet" role="dialog">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-title">Uncategorized</span>
+      <button class="sheet-close" id="pendingClose" aria-label="Close">×</button>
+    </div>
+
+    <div class="pending-list" id="pendingList">
+      <div class="empty">Loading…</div>
+    </div>
+  </div>
+</div>
+
 <script>
 const COLORS = ['#F97316', '#22C55E', '#14B8A6', '#A855F7', '#EC4899', '#F59E0B', '#64748B', '#3B82F6'];
 let chart = null;
@@ -887,27 +1078,22 @@ if ('serviceWorker' in navigator) {
 function fmtRs(n) {
   return 'Rs ' + Number(n || 0).toLocaleString();
 }
-
 function emojiFor(cat) {
   return CAT_EMOJI[cat] || '📌';
 }
-
 function fmtWhen(dateStr, timeStr) {
   try {
     const [y, m, d] = dateStr.split('-').map(Number);
     const [hh, mm] = timeStr.split(':').map(Number);
     const dt = new Date(y, m - 1, d, hh, mm);
     const now = new Date();
-
     const sameDay = (a, b) =>
       a.getFullYear() === b.getFullYear() &&
       a.getMonth() === b.getMonth() &&
       a.getDate() === b.getDate();
-
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const t = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-
     if (sameDay(dt, now)) return `Today, ${t}`;
     if (sameDay(dt, yesterday)) return `Yesterday, ${t}`;
     return `${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${t}`;
@@ -916,13 +1102,16 @@ function fmtWhen(dateStr, timeStr) {
   }
 }
 
-/* ---------- CHART + TOOLTIP TOGGLE ---------- */
+function haptic() {
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+/* ---------- CHART + TOOLTIP ---------- */
 const tooltipEl = document.getElementById('tooltip');
 const tooltipDot = document.getElementById('tooltipDot');
 const tooltipName = document.getElementById('tooltipName');
 const tooltipAmount = document.getElementById('tooltipAmount');
 const tooltipPercent = document.getElementById('tooltipPercent');
-
 let activeIndex = null;
 
 function showTooltip(index) {
@@ -931,7 +1120,6 @@ function showTooltip(index) {
   const value = chart.data.datasets[0].data[index];
   const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
   const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-
   tooltipDot.style.background = COLORS[index % COLORS.length];
   tooltipName.textContent = label;
   tooltipAmount.textContent = fmtRs(value);
@@ -939,18 +1127,13 @@ function showTooltip(index) {
   tooltipEl.classList.add('visible');
   activeIndex = index;
 }
-
 function hideTooltip() {
   tooltipEl.classList.remove('visible');
   activeIndex = null;
 }
-
 function toggleTooltip(index) {
-  if (activeIndex === index) {
-    hideTooltip();
-  } else {
-    showTooltip(index);
-  }
+  if (activeIndex === index) hideTooltip();
+  else showTooltip(index);
 }
 
 async function loadChart(days) {
@@ -958,9 +1141,7 @@ async function loadChart(days) {
     const res = await fetch(`/api/spending?days=${days}`);
     const data = await res.json();
     document.getElementById('totalAmount').textContent = fmtRs(data.total);
-
     const ctx = document.getElementById('spendingChart').getContext('2d');
-
     if (chart) {
       chart.data.labels = data.labels;
       chart.data.datasets[0].data = data.values;
@@ -983,23 +1164,16 @@ async function loadChart(days) {
           responsive: true,
           maintainAspectRatio: true,
           cutout: '74%',
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
           onClick: (evt, els) => {
-            if (els.length > 0) {
-              toggleTooltip(els[0].index);
-            } else {
-              hideTooltip();
-            }
+            if (els.length > 0) toggleTooltip(els[0].index);
+            else hideTooltip();
           }
         }
       });
     }
   } catch (err) {
     console.error(err);
-    document.getElementById('totalAmount').textContent = 'Err';
   }
 }
 
@@ -1012,17 +1186,14 @@ async function loadTransactions(days) {
     const res = await fetch(`/api/transactions?days=${days}`);
     const tx = await res.json();
     currentTx = tx;
-
     document.getElementById('txCount').textContent = tx.length + (tx.length === 1 ? ' entry' : ' entries');
-
     if (!tx || tx.length === 0) {
       list.innerHTML = '<div class="empty">No transactions yet</div>';
       return;
     }
-
     list.innerHTML = tx.map(t => `
       <div class="tx-row" data-id="${t.id}">
-        <div class="tx-badge" data-cat="${t.category || 'Other'}">${emojiFor(t.category)}</div>
+        <div class="tx-badge" data-cat="${t.category || 'Other'}" data-id="${t.id}">${emojiFor(t.category)}</div>
         <div class="tx-info">
           <div class="tx-cat">${t.category || 'Uncategorized'}</div>
           <div class="tx-time">${fmtWhen(t.date, t.time)}</div>
@@ -1038,53 +1209,163 @@ async function loadTransactions(days) {
     `).join('');
 
     list.querySelectorAll('.tx-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteTransaction(btn.dataset.id);
-      });
+      btn.addEventListener('click', (e) => { e.stopPropagation(); deleteTransaction(btn.dataset.id); });
+    });
+    list.querySelectorAll('.tx-move').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); openMoveSheet(btn.dataset.id); });
     });
 
-    list.querySelectorAll('.tx-move').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openMoveSheet(btn.dataset.id);
+    // Long-press on emoji badge
+    if (!removeMode && !moveMode) {
+      list.querySelectorAll('.tx-badge').forEach(badge => {
+        attachLongPress(badge, badge.dataset.id);
       });
-    });
+    }
   } catch (err) {
     console.error(err);
     list.innerHTML = '<div class="empty">Could not load</div>';
   }
 }
 
+/* ---------- LONG PRESS ---------- */
+let longPressTimer = null;
+let longPressTarget = null;
+
+function attachLongPress(el, txId) {
+  let startX = 0, startY = 0, moved = false;
+  let pressTimer = null;
+  let triggered = false;
+
+  const start = (e) => {
+    if (removeMode || moveMode) return;
+    triggered = false;
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    moved = false;
+
+    el.closest('.tx-row')?.classList.add('pressing');
+
+    pressTimer = setTimeout(() => {
+      if (!moved) {
+        triggered = true;
+        haptic();
+        openContextMenu(txId, startX, startY);
+      }
+    }, 1500);
+  };
+
+  const move = (e) => {
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    if (Math.sqrt(dx*dx + dy*dy) > 10) {
+      moved = true;
+      clearTimeout(pressTimer);
+      el.closest('.tx-row')?.classList.remove('pressing');
+    }
+  };
+
+  const end = () => {
+    clearTimeout(pressTimer);
+    el.closest('.tx-row')?.classList.remove('pressing');
+  };
+
+  el.addEventListener('touchstart', start, { passive: true });
+  el.addEventListener('touchmove', move, { passive: true });
+  el.addEventListener('touchend', end);
+  el.addEventListener('touchcancel', end);
+
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mousemove', move);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', end);
+
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+/* ---------- CONTEXT MENU ---------- */
+const ctxMenu = document.getElementById('ctxMenu');
+const ctxBackdrop = document.getElementById('ctxBackdrop');
+const ctxChange = document.getElementById('ctxChange');
+const ctxRemove = document.getElementById('ctxRemove');
+let ctxTxId = null;
+
+function openContextMenu(txId, x, y) {
+  ctxTxId = txId;
+  const menuWidth = 220;
+  const menuHeight = 110;
+  const padding = 12;
+
+  let left = x;
+  let top = y;
+
+  if (left + menuWidth + padding > window.innerWidth) left = window.innerWidth - menuWidth - padding;
+  if (left < padding) left = padding;
+  if (top + menuHeight + padding > window.innerHeight) top = y - menuHeight - 12;
+  if (top < padding) top = padding;
+
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top = top + 'px';
+  ctxMenu.classList.add('open');
+  ctxBackdrop.classList.add('open');
+}
+
+function closeContextMenu() {
+  ctxMenu.classList.remove('open');
+  ctxBackdrop.classList.remove('open');
+  ctxTxId = null;
+}
+
+ctxBackdrop.addEventListener('click', closeContextMenu);
+window.addEventListener('scroll', closeContextMenu, true);
+
+ctxChange.addEventListener('click', () => {
+  const id = ctxTxId;
+  closeContextMenu();
+  if (id) openMoveSheet(id);
+});
+
+ctxRemove.addEventListener('click', () => {
+  const id = ctxTxId;
+  closeContextMenu();
+  if (id) deleteTransaction(id);
+});
+
+/* ---------- DELETE ---------- */
 async function deleteTransaction(id) {
-  if (!confirm('Delete this transaction?')) return;
+  if (!confirm('Remove this transaction?')) return;
   try {
     const res = await fetch(`/api/transaction/${id}`, { method: 'DELETE' });
     if (res.ok) {
       await loadAll(currentDays);
+      await refreshPending();
     } else {
-      alert('Failed to delete');
+      alert('Failed to remove');
     }
   } catch (err) {
-    alert('Failed to delete');
+    alert('Failed to remove');
   }
 }
 
-/* ---------- MOVE / CHANGE CATEGORY ---------- */
+/* ---------- MOVE SHEET ---------- */
 const moveOverlay = document.getElementById('moveOverlay');
 let moveTxId = null;
 
 function openMoveSheet(id) {
   const tx = currentTx.find(t => String(t.id) === String(id));
-  if (!tx) return;
   moveTxId = id;
 
-  document.getElementById('moveAmount').textContent = fmtRs(tx.amount);
-  document.getElementById('moveMeta').textContent = fmtWhen(tx.date, tx.time);
-
-  document.querySelectorAll('#moveCatChips .cat-chip').forEach(c => {
-    c.classList.toggle('selected', c.dataset.cat === tx.category);
-  });
+  if (tx) {
+    document.getElementById('moveAmount').textContent = fmtRs(tx.amount);
+    document.getElementById('moveMeta').textContent = fmtWhen(tx.date, tx.time);
+    document.querySelectorAll('#moveCatChips .cat-chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.cat === tx.category);
+    });
+  } else {
+    document.getElementById('moveAmount').textContent = '—';
+    document.getElementById('moveMeta').textContent = '';
+  }
 
   moveOverlay.classList.add('open');
 }
@@ -1097,13 +1378,6 @@ function closeMoveSheet() {
 document.getElementById('moveClose').addEventListener('click', closeMoveSheet);
 document.getElementById('moveCancel').addEventListener('click', closeMoveSheet);
 moveOverlay.addEventListener('click', (e) => { if (e.target === moveOverlay) closeMoveSheet(); });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (moveOverlay.classList.contains('open')) closeMoveSheet();
-    if (overlay.classList.contains('open')) closeSheet();
-    if (kMenu.classList.contains('open')) closeKMenu();
-  }
-});
 
 document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
   chip.addEventListener('click', () => {
@@ -1115,11 +1389,9 @@ document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
 document.getElementById('moveSave').addEventListener('click', async () => {
   const sel = document.querySelector('#moveCatChips .cat-chip.selected');
   if (!sel || !moveTxId) return;
-
   const btn = document.getElementById('moveSave');
   btn.disabled = true;
   btn.textContent = 'Saving…';
-
   try {
     await fetch('/api/update_category', {
       method: 'POST',
@@ -1128,6 +1400,7 @@ document.getElementById('moveSave').addEventListener('click', async () => {
     });
     closeMoveSheet();
     await loadAll(currentDays);
+    await refreshPending();
   } catch (err) {
     alert('Failed to change');
   } finally {
@@ -1158,23 +1431,12 @@ const brandBtn = document.getElementById('brandBtn');
 const menuRemove = document.getElementById('menuRemove');
 const menuMove = document.getElementById('menuMove');
 
-function openKMenu() {
-  kMenu.classList.add('open');
-  menuRemove.classList.toggle('active', removeMode);
-  menuMove.classList.toggle('active', moveMode);
-}
-
-function closeKMenu() {
-  kMenu.classList.remove('open');
-}
+function closeKMenu() { kMenu.classList.remove('open'); }
 
 brandBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  if (kMenu.classList.contains('open')) {
-    closeKMenu();
-  } else {
-    openKMenu();
-  }
+  if (kMenu.classList.contains('open')) closeKMenu();
+  else kMenu.classList.add('open');
 });
 
 document.addEventListener('click', (e) => {
@@ -1188,9 +1450,8 @@ menuRemove.addEventListener('click', () => {
   moveMode = false;
   app.classList.toggle('remove-mode', removeMode);
   app.classList.toggle('move-mode', moveMode);
-  menuRemove.classList.toggle('active', removeMode);
-  menuMove.classList.toggle('active', moveMode);
   closeKMenu();
+  loadTransactions(currentDays);
 });
 
 menuMove.addEventListener('click', () => {
@@ -1198,9 +1459,8 @@ menuMove.addEventListener('click', () => {
   removeMode = false;
   app.classList.toggle('move-mode', moveMode);
   app.classList.toggle('remove-mode', removeMode);
-  menuMove.classList.toggle('active', moveMode);
-  menuRemove.classList.toggle('active', removeMode);
   closeKMenu();
+  loadTransactions(currentDays);
 });
 
 /* ---------- ADD SHEET ---------- */
@@ -1213,12 +1473,10 @@ function openSheet() {
   overlay.classList.add('open');
   setTimeout(() => document.getElementById('mAmount').focus(), 100);
 }
-
 function closeSheet() {
   overlay.classList.remove('open');
   document.getElementById('mAmount').value = '';
 }
-
 document.getElementById('addBtn').addEventListener('click', openSheet);
 document.getElementById('sheetClose').addEventListener('click', closeSheet);
 document.getElementById('sheetCancel').addEventListener('click', closeSheet);
@@ -1237,16 +1495,10 @@ document.getElementById('sheetSave').addEventListener('click', async () => {
   const category = sel ? sel.dataset.cat : 'Other';
   const date = document.getElementById('mDate').value;
   const time = document.getElementById('mTime').value;
-
-  if (!amount || !date || !time) {
-    alert('Please fill in amount, date and time.');
-    return;
-  }
-
+  if (!amount || !date || !time) { alert('Please fill in amount, date and time.'); return; }
   const btn = document.getElementById('sheetSave');
   btn.disabled = true;
   btn.textContent = 'Saving…';
-
   try {
     const res = await fetch('/api/add_transaction', {
       method: 'POST',
@@ -1268,6 +1520,67 @@ document.getElementById('sheetSave').addEventListener('click', async () => {
   }
 });
 
+/* ---------- PENDING LIST ---------- */
+const inboxBtn = document.getElementById('inboxBtn');
+const pendingOverlay = document.getElementById('pendingOverlay');
+
+async function refreshPending() {
+  try {
+    const res = await fetch('/api/pending');
+    const pending = await res.json();
+    if (pending && pending.length > 0) {
+      const wasHidden = !inboxBtn.classList.contains('has-pending');
+      inboxBtn.classList.add('has-pending');
+      if (wasHidden) {
+        inboxBtn.classList.add('pulse');
+        setTimeout(() => inboxBtn.classList.remove('pulse'), 6000);
+      }
+    } else {
+      inboxBtn.classList.remove('has-pending');
+      inboxBtn.classList.remove('pulse');
+    }
+  } catch (err) {
+    console.error('Pending check failed:', err);
+  }
+}
+
+async function loadPendingList() {
+  const list = document.getElementById('pendingList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await fetch('/api/pending');
+    const pending = await res.json();
+    if (!pending || pending.length === 0) {
+      list.innerHTML = '<div class="empty">All caught up</div>';
+      return;
+    }
+    list.innerHTML = pending.map(p => `
+      <a class="pending-row" href="/categorize?id=${p.id}">
+        <div class="pending-amt">Rs ${Number(p.amount).toLocaleString()}</div>
+        <div class="pending-info">
+          <div class="pending-time">${fmtWhen(p.date, p.time)}</div>
+          <div class="pending-hint">Tap to categorize</div>
+        </div>
+        <span class="pending-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </span>
+      </a>
+    `).join('');
+  } catch (err) {
+    list.innerHTML = '<div class="empty">Could not load</div>';
+  }
+}
+
+inboxBtn.addEventListener('click', () => {
+  pendingOverlay.classList.add('open');
+  loadPendingList();
+});
+
+document.getElementById('pendingClose').addEventListener('click', () => pendingOverlay.classList.remove('open'));
+pendingOverlay.addEventListener('click', (e) => { if (e.target === pendingOverlay) pendingOverlay.classList.remove('open'); });
+
 /* ---------- PUSH SUBSCRIPTION ---------- */
 const subscribeCard = document.getElementById('subscribeCard');
 const subscribeBtn = document.getElementById('subscribeBtn');
@@ -1285,21 +1598,14 @@ async function initPush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   const reg = await navigator.serviceWorker.ready;
   const existing = await reg.pushManager.getSubscription();
-  if (existing) {
-    subscribeCard.classList.add('hidden');
-    return;
-  }
+  if (existing) { subscribeCard.classList.add('hidden'); return; }
   subscribeCard.classList.remove('hidden');
   subscribeBtn.addEventListener('click', async () => {
     subscribeBtn.disabled = true;
     subscribeBtn.textContent = 'Enabling…';
     try {
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        subscribeBtn.disabled = false;
-        subscribeBtn.textContent = 'Enable';
-        return;
-      }
+      if (permission !== 'granted') { subscribeBtn.disabled = false; subscribeBtn.textContent = 'Enable'; return; }
       const keyRes = await fetch('/vapid-public-key');
       const keyData = await keyRes.json();
       const sub = await reg.pushManager.subscribe({
@@ -1322,6 +1628,8 @@ async function initPush() {
 
 /* ---------- INIT ---------- */
 loadAll(30);
+refreshPending();
+setInterval(refreshPending, 30000);
 initPush();
 </script>
 
