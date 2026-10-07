@@ -205,13 +205,13 @@ def api_spending():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT category, SUM(amount) as total
-        FROM transactions
-        WHERE category IS NOT NULL
-        AND date >= %s
-        GROUP BY category
-        ORDER BY total DESC
-    """, (cutoff_str,))
+    SELECT COALESCE(category, 'Uncategorized') as cat, SUM(amount) as total
+    FROM transactions
+    WHERE date >= %s
+    GROUP BY cat
+    ORDER BY total DESC
+""", (cutoff_str,))
+    
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -346,13 +346,12 @@ def api_transactions():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     cur.execute("""
-        SELECT id, date, time, amount, category
-        FROM transactions
-        WHERE date >= %s
-        AND category IS NOT NULL
-        ORDER BY id DESC
-        LIMIT 50
-    """, (cutoff_str,))
+    SELECT id, date, time, amount, COALESCE(category, 'Uncategorized') as category
+    FROM transactions
+    WHERE date >= %s
+    ORDER BY id DESC
+    LIMIT 50
+""", (cutoff_str,))
     
     rows = cur.fetchall()
     cur.close()

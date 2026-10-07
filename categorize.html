@@ -20,6 +20,7 @@
     --accent: #2563EB;
     --accent-hover: #1D4ED8;
     --accent-fg: #FFFFFF;
+    --danger: #DC2626;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,7 +31,10 @@
     color: var(--fg);
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  button { font-family: inherit; cursor: pointer; }
 
   .wrap {
     max-width: 480px;
@@ -86,7 +90,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 14px;
+    padding: 12px 14px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
@@ -97,7 +101,7 @@
     letter-spacing: -0.005em;
     text-align: left;
     transition: all 150ms ease;
-    min-height: 52px;
+    min-height: 56px;
   }
   .cat:hover { background: rgba(255, 255, 255, 0.06); }
   .cat:active { transform: scale(0.98); }
@@ -107,6 +111,56 @@
     border-color: var(--accent);
     color: var(--accent-fg);
   }
+
+  /* Category icon container inside each button */
+  .cat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: #FFFFFF;
+  }
+  .cat-icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: #FFFFFF;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cat-icon[data-cat="Food"]          { background: linear-gradient(135deg, #FB923C, #EA580C); }
+  .cat-icon[data-cat="Mart"]          { background: linear-gradient(135deg, #4ADE80, #16A34A); }
+  .cat-icon[data-cat="Groceries"]     { background: linear-gradient(135deg, #2DD4BF, #0D9488); }
+  .cat-icon[data-cat="Entertainment"] { background: linear-gradient(135deg, #C084FC, #9333EA); }
+  .cat-icon[data-cat="Shopping"]      { background: linear-gradient(135deg, #F472B6, #DB2777); }
+  .cat-icon[data-cat="Bills"]         { background: linear-gradient(135deg, #FBBF24, #D97706); }
+  .cat-icon[data-cat="Transfer"]      { background: linear-gradient(135deg, #94A3B8, #475569); }
+  .cat-icon[data-cat="Other"]         { background: linear-gradient(135deg, #60A5FA, #2563EB); }
+
+  /* Delete button */
+  .delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    border-radius: 12px;
+    color: #F87171;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    transition: background 150ms ease, transform 100ms ease;
+  }
+  .delete-btn:hover { background: rgba(220, 38, 38, 0.1); }
+  .delete-btn:active { transform: scale(0.99); }
 
   .state {
     flex: 1;
@@ -129,6 +183,11 @@
     place-items: center;
     margin: 0 auto 16px;
     color: #22C55E;
+  }
+  .success-mark.danger {
+    background: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.35);
+    color: #F87171;
   }
 
   .success-title {
@@ -173,34 +232,58 @@
 
     <div class="prompt">What category?</div>
 
-    <div class="grid">
-      <button class="cat" data-cat="Food">🍔 Food</button>
-      <button class="cat" data-cat="Fuel">⛽ Fuel</button>
-      <button class="cat" data-cat="Groceries">🛒 Groceries</button>
-      <button class="cat" data-cat="Entertainment">📺 Entertainment</button>
-      <button class="cat" data-cat="Shopping">🛍️ Shopping</button>
-      <button class="cat" data-cat="Bills">🏠 Bills</button>
-      <button class="cat" data-cat="Transfer">💸 Transfer</button>
-      <button class="cat" data-cat="Other">❓ Other</button>
-    </div>
+    <div class="grid" id="catGrid"></div>
+
+    <button class="delete-btn" id="deleteBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+        <path d="M10 11v6"></path>
+        <path d="M14 11v6"></path>
+      </svg>
+      Remove transaction
+    </button>
   </div>
 
   <div id="success" class="state hidden" style="flex-direction: column;">
-    <div class="success-mark">
+    <div class="success-mark" id="successMark">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
     </div>
-    <div class="success-title">Saved</div>
-    <div class="success-sub">Category updated</div>
+    <div class="success-title" id="successTitle">Saved</div>
+    <div class="success-sub" id="successSub">Category updated</div>
     <a href="/dashboard" class="back-link">Back to dashboard</a>
   </div>
 
 </div>
 
 <script>
+  /* SVG icons per category (matches the dashboard) */
+  const CAT_ICON = {
+    Food:          '<svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 3 3v8"/><path d="M7 3v7"/><path d="M10 3v7"/><path d="M17 3c-1.5 2-2 4-2 7 0 2 1 3 2 3v8"/></svg>',
+    Mart:          '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    Groceries:     '<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
+    Entertainment: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
+    Shopping:      '<svg viewBox="0 0 24 24"><path d="M20.59 13.41 12 22l-9-9V4a1 1 0 0 1 1-1h9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
+    Bills:         '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16l3-2 3 2 3-2 3 2 3-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>',
+    Transfer:      '<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/></svg>',
+    Other:         '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  };
+
+  const CATEGORIES = ['Food', 'Mart', 'Groceries', 'Entertainment', 'Shopping', 'Bills', 'Transfer', 'Other'];
+
   const params = new URLSearchParams(location.search);
   const txId = params.get('id');
+
+  /* Build the category grid dynamically */
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = CATEGORIES.map(cat => `
+    <button class="cat" data-cat="${cat}">
+      <span class="cat-icon" data-cat="${cat}">${CAT_ICON[cat]}</span>
+      ${cat}
+    </button>
+  `).join('');
 
   async function load() {
     if (!txId) {
@@ -223,6 +306,7 @@
     }
   }
 
+  /* Wire up category buttons */
   document.querySelectorAll('.cat').forEach(btn => {
     btn.addEventListener('click', async () => {
       btn.classList.add('selected');
@@ -233,16 +317,43 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ transaction_id: txId, category: btn.dataset.cat })
         });
-        document.getElementById('categorize').classList.add('hidden');
-        const success = document.getElementById('success');
-        success.classList.remove('hidden');
-        success.style.display = 'flex';
+        showSuccess('Saved', 'Category updated', false);
       } catch (err) {
         alert('Failed to save');
         document.querySelectorAll('.cat').forEach(b => b.disabled = false);
       }
     });
   });
+
+  /* Delete button */
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (!confirm('Remove this transaction?')) return;
+    try {
+      const res = await fetch(`/api/transaction/${txId}`, { method: 'DELETE' });
+      if (res.ok) {
+        showSuccess('Removed', 'Transaction deleted', true);
+      } else {
+        alert('Failed to remove');
+      }
+    } catch (err) {
+      alert('Failed to remove');
+    }
+  });
+
+  function showSuccess(title, sub, isDanger) {
+    document.getElementById('categorize').classList.add('hidden');
+    const success = document.getElementById('success');
+    success.classList.remove('hidden');
+    success.style.display = 'flex';
+    document.getElementById('successTitle').textContent = title;
+    document.getElementById('successSub').textContent = sub;
+
+    const mark = document.getElementById('successMark');
+    if (isDanger) {
+      mark.classList.add('danger');
+      mark.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>';
+    }
+  }
 
   load();
 </script>
