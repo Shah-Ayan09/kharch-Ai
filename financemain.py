@@ -327,6 +327,53 @@ def test():
     print("🔍 Test route was hit!")
     return "Test OK!", 200
 
+@app.route("/reset-push")
+def reset_push():
+    return """
+    <!DOCTYPE html>
+    <html><head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Push</title>
+    <style>
+      body { background:#0B0E14; color:#F5F6F8; font-family:-apple-system,sans-serif; padding:40px 20px; text-align:center; }
+      h1 { font-size:20px; margin-bottom:20px; }
+      p { color:#8E8E93; font-size:14px; margin-bottom:16px; line-height:1.5; }
+      button { padding:14px 24px; background:#2563EB; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:600; margin-top:20px; cursor:pointer; }
+    </style>
+    </head><body>
+    <h1>Reset Push Notifications</h1>
+    <p id="status">Tap the button below to force-clear the subscription on this device.</p>
+    <button onclick="reset()">Reset</button>
+    <script>
+      async function reset() {
+        const status = document.getElementById('status');
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) await sub.unsubscribe();
+            await reg.unregister();
+          }
+          status.textContent = 'Done. Now go back to the dashboard and reload.';
+        } catch (err) {
+          status.textContent = 'Error: ' + err.message;
+        }
+      }
+    </script>
+    </body></html>
+    """
+
+@app.route("/force-clear-subscriptions")
+def force_clear_subs():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM push_subscriptions')
+    conn.commit()
+    count = cur.rowcount
+    cur.close()
+    conn.close()
+    return f"Deleted {count} subscriptions from server."
+
 # --- DASHBOARD ---
 @app.route("/dashboard")
 def dashboard():
