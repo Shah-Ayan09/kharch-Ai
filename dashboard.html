@@ -1573,20 +1573,27 @@ pushToggleBtn.addEventListener('click', async () => {
   const wasDisabled = pushToggleBtn.classList.contains('danger');
   pushToggleBtn.textContent = 'Working…';
 
+  // Diagnostic step log
+  let step = 'starting';
+  pushStatusText.textContent = step;
+
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       alert('Push notifications are not supported on this device.');
+      pushToggleBtn.textContent = 'Enable';
       return;
     }
 
+    step = 'checking subscription';
+    pushStatusText.textContent = step;
+    const reg = await navigator.serviceWorker.ready;
+    let existing = await reg.pushManager.getSubscription();
+
     if (wasDisabled) {
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        const existing = await reg.pushManager.getSubscription();
-        if (existing) await existing.unsubscribe();
-      } catch (e) {
-        console.error('Unsubscribe error:', e);
-      }
+      // Disable path
+      step = 'unsubscribing';
+      pushStatusText.textContent = step;
+      if (existing) await existing.unsubscribe();
       await fetch('/force-clear-subscriptions').catch(() => {});
       pushStatusDot.className = 'status-dot off';
       pushStatusText.textContent = 'Disabled';
@@ -1595,33 +1602,55 @@ pushToggleBtn.addEventListener('click', async () => {
       return;
     }
 
+    // Enable path
+    step = 'requesting permission';
+    pushStatusText.textContent = step;
     const permission = await Notification.requestPermission();
+    pushStatusText.textContent = 'permission: ' + permission;
+
     if (permission !== 'granted') {
-      alert('Permission was not granted. Enable notifications in iPhone Settings → Notifications.');
+      alert('Permission was not granted. Go to iPhone Settings → Notifications → Kharch and enable.');
       pushToggleBtn.textContent = 'Enable';
       return;
     }
 
-    const reg = await navigator.serviceWorker.ready;
-    let existing = await reg.pushManager.getSubscription();
-
+    // If stale subscription exists, clear it first
     if (existing) {
-      await existing.unsubscribe();
+      step = 'clearing stale subscription';
+      pushStatusText.textContent = step;
+      try {
+        await existing.unsubscribe();
+      } catch (e) {
+        console.error('Stale unsubscribe failed:', e);
+      }
     }
 
+    step = 'fetching vapid key';
+    pushStatusText.textContent = step;
     const keyRes = await fetch('/vapid-public-key');
     const keyData = await keyRes.json();
 
+    step = 'subscribing';
+    pushStatusText.textContent = step;
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
     });
 
-    await fetch('/subscribe', {
+    step = 'saving to server';
+    pushStatusText.textContent = step;
+    const saveRes = await fetch('/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sub)
     });
+
+    if (!saveRes.ok) {
+      pushStatusText.textContent = 'server error ' + saveRes.status;
+      alert('Server rejected subscription: ' + saveRes.status);
+      pushToggleBtn.textContent = 'Enable';
+      return;
+    }
 
     pushStatusDot.className = 'status-dot on';
     pushStatusText.textContent = 'Subscribed';
@@ -1629,8 +1658,9 @@ pushToggleBtn.addEventListener('click', async () => {
     pushToggleBtn.classList.add('danger');
   } catch (err) {
     console.error(err);
-    alert('Error: ' + (err.message || 'unknown'));
-    pushToggleBtn.textContent = wasDisabled ? 'Disable' : 'Enable';
+    pushStatusText.textContent = 'failed at: ' + step;
+    alert('Error at "' + step + '": ' + (err.message || 'unknown'));
+    pushToggleBtn.textContent = 'Enable';
   } finally {
     pushToggleBtn.disabled = false;
   }
