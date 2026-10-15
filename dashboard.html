@@ -25,6 +25,7 @@
     --accent-fg: #FFFFFF;
     --danger: #DC2626;
     --danger-fg: #FFFFFF;
+    --success: #22C55E;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -328,14 +329,12 @@
     padding-bottom: 20px;
   }
 
-  /* Swipe container: clips the row as it slides */
   .tx-swipe {
     position: relative;
     border-radius: 16px;
     overflow: hidden;
   }
 
-  /* The swipe hint text sits behind the row */
   .tx-swipe-hint {
     position: absolute;
     inset: 0;
@@ -355,7 +354,6 @@
   .tx-swipe-hint.blue { background: var(--accent); }
   .tx-swipe-hint.red  { background: var(--danger); }
 
-  /* The row itself */
   .tx-row {
     display: flex;
     align-items: center;
@@ -440,42 +438,6 @@
     background: rgba(255, 255, 255, 0.02);
     border: 1px dashed rgba(255, 255, 255, 0.06);
     border-radius: 16px;
-  }
-
-  /* ---------- SUBSCRIBE ---------- */
-  .subscribe {
-    margin-top: 16px;
-    padding: 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .subscribe.hidden { display: none; }
-  .subscribe-body { flex: 1; min-width: 0; }
-  .subscribe-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--fg);
-    margin-bottom: 2px;
-  }
-  .subscribe-desc {
-    font-size: 12px;
-    color: var(--fg-muted);
-    line-height: 1.4;
-  }
-  .subscribe-btn {
-    padding: 9px 14px;
-    background: var(--accent);
-    color: var(--accent-fg);
-    border: none;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    min-height: 36px;
-    flex-shrink: 0;
   }
 
   /* ---------- SHEETS ---------- */
@@ -666,6 +628,93 @@
   .btn-primary:active { transform: scale(0.99); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  /* ---------- SETTINGS SHEET ---------- */
+  .settings-group {
+    margin-bottom: 28px;
+  }
+  .settings-group-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    margin-bottom: 10px;
+    padding: 0 2px;
+  }
+  .settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    margin-bottom: 8px;
+  }
+  .settings-item-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .settings-item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg);
+    margin-bottom: 3px;
+  }
+  .settings-item-desc {
+    font-size: 12px;
+    color: var(--fg-muted);
+    line-height: 1.4;
+  }
+  .settings-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    margin-top: 4px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--fg-subtle);
+  }
+  .status-dot.on { background: var(--success); }
+  .status-dot.off { background: var(--danger); }
+
+  .btn-settings {
+    padding: 10px 16px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    min-height: 40px;
+    transition: background 150ms ease;
+  }
+  .btn-settings:hover { background: var(--accent-hover); }
+  .btn-settings:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-settings.danger {
+    background: transparent;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    color: #F87171;
+  }
+  .btn-settings.danger:hover {
+    background: rgba(220, 38, 38, 0.1);
+  }
+  .btn-settings.subtle {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg);
+  }
+  .btn-settings.subtle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
   /* ---------- PENDING LIST ---------- */
   .pending-list {
     display: flex;
@@ -768,6 +817,13 @@
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
+
+      <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -805,14 +861,6 @@
     <div class="tx-scroll">
       <div class="tx-list" id="transactionList">
         <div class="empty">Loading…</div>
-      </div>
-
-      <div class="subscribe hidden" id="subscribeCard">
-        <div class="subscribe-body">
-          <div class="subscribe-title">Enable notifications</div>
-          <div class="subscribe-desc">Get notified when a new transaction arrives.</div>
-        </div>
-        <button class="subscribe-btn" id="subscribeBtn">Enable</button>
       </div>
     </div>
   </div>
@@ -912,12 +960,55 @@
   </div>
 </div>
 
+<!-- Settings Sheet -->
+<div class="overlay" id="settingsOverlay">
+  <div class="sheet" role="dialog">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-title">Settings</span>
+      <button class="sheet-close" id="settingsClose" aria-label="Close">×</button>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">Notifications</div>
+
+      <div class="settings-item">
+        <div class="settings-item-body">
+          <div class="settings-item-title">Push notifications</div>
+          <div class="settings-status">
+            <span class="status-dot" id="pushStatusDot"></span>
+            <span id="pushStatusText">Checking…</span>
+          </div>
+        </div>
+        <button class="btn-settings" id="pushToggleBtn">Enable</button>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-item-body">
+          <div class="settings-item-title">Reset subscription</div>
+          <div class="settings-item-desc">Use this if notifications stop arriving</div>
+        </div>
+        <button class="btn-settings subtle" id="pushResetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">About</div>
+      <div class="settings-item">
+        <div class="settings-item-body">
+          <div class="settings-item-title">Kharch AI</div>
+          <div class="settings-item-desc">Version 2.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const COLORS = ['#F97316', '#22C55E', '#14B8A6', '#A855F7', '#EC4899', '#F59E0B', '#64748B', '#3B82F6'];
 let chart = null;
 let currentDays = 30;
 
-/* SVG icons per category (line art, 2px stroke) */
 const CAT_ICON = {
   Food:          '<svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 3 3v8"/><path d="M7 3v7"/><path d="M10 3v7"/><path d="M17 3c-1.5 2-2 4-2 7 0 2 1 3 2 3v8"/></svg>',
   Mart:          '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
@@ -931,8 +1022,12 @@ const CAT_ICON = {
 };
 
 /* ---------- SERVICE WORKER ---------- */
+let swRegistration = null;
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js').catch(e => console.log(e));
+  navigator.serviceWorker.register('/service-worker.js').then(r => {
+    swRegistration = r;
+    console.log('SW registered');
+  }).catch(e => console.log(e));
 }
 
 /* ---------- HELPERS ---------- */
@@ -966,7 +1061,7 @@ function haptic() {
   if (navigator.vibrate) navigator.vibrate(10);
 }
 
-/* ---------- CHART + TOOLTIP ---------- */
+/* ---------- CHART ---------- */
 const tooltipEl = document.getElementById('tooltip');
 const tooltipDot = document.getElementById('tooltipDot');
 const tooltipName = document.getElementById('tooltipName');
@@ -1077,7 +1172,7 @@ async function loadTransactions(days) {
   }
 }
 
-/* ---------- SWIPE SYSTEM ---------- */
+/* ---------- SWIPE ---------- */
 let openSwipe = null;
 
 function attachSwipe(swipeEl) {
@@ -1085,9 +1180,7 @@ function attachSwipe(swipeEl) {
   const hintEl = swipeEl.querySelector('[data-hint]');
   const txId = swipeEl.dataset.id;
 
-  let startX = 0;
-  let startY = 0;
-  let currentX = 0;
+  let startX = 0, startY = 0, currentX = 0;
   let dragging = false;
   let lockedDirection = null;
   let passedThreshold1 = false;
@@ -1132,7 +1225,6 @@ function attachSwipe(swipeEl) {
     const dx = t.clientX - startX;
     const dy = t.clientY - startY;
 
-    // Determine direction on first significant movement
     if (!lockedDirection) {
       if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) lockedDirection = 'h';
       else if (Math.abs(dy) > 8) lockedDirection = 'v';
@@ -1141,9 +1233,7 @@ function attachSwipe(swipeEl) {
     if (e.cancelable) e.preventDefault();
 
     dragging = true;
-    currentX = Math.max(0, dx); // only swipe right
-
-    // Cap at 100%
+    currentX = Math.max(0, dx);
     const cap = window.innerWidth;
     currentX = Math.min(currentX, cap);
 
@@ -1151,21 +1241,18 @@ function attachSwipe(swipeEl) {
     rowEl.style.transform = `translateX(${currentX}px)`;
     rowEl.classList.remove('no-anim');
 
-    // Threshold 1 (33%)
     if (!passedThreshold1 && currentX >= threshold1()) {
       passedThreshold1 = true;
       haptic();
     }
     if (currentX < threshold1()) passedThreshold1 = false;
 
-    // Threshold 2 (66%)
     if (!passedThreshold2 && currentX >= threshold2()) {
       passedThreshold2 = true;
       haptic();
     }
     if (currentX < threshold2()) passedThreshold2 = false;
 
-    // Update hint text + color
     if (currentX >= threshold2()) {
       hintEl.textContent = 'Swipe completely to delete transaction';
       hintEl.classList.add('red');
@@ -1181,29 +1268,19 @@ function attachSwipe(swipeEl) {
   };
 
   const end = () => {
-    if (!dragging) {
-      resetRow();
-      return;
-    }
+    if (!dragging) { resetRow(); return; }
     const was2 = currentX >= threshold2();
     const was1 = currentX >= threshold1();
-    const finalX = currentX;
-
     resetRow(true);
     openSwipe = null;
-
-    if (was2) {
-      setTimeout(() => deleteTransaction(txId), 220);
-    } else if (was1) {
-      setTimeout(() => openMoveSheet(txId), 220);
-    }
+    if (was2) setTimeout(() => deleteTransaction(txId), 220);
+    else if (was1) setTimeout(() => openMoveSheet(txId), 220);
   };
 
   rowEl.addEventListener('touchstart', start, { passive: true });
   rowEl.addEventListener('touchmove', move, { passive: false });
   rowEl.addEventListener('touchend', end);
   rowEl.addEventListener('touchcancel', end);
-
   rowEl.addEventListener('mousedown', start);
   rowEl.addEventListener('mousemove', move);
   rowEl.addEventListener('mouseup', end);
@@ -1235,26 +1312,19 @@ let moveTxId = null;
 function openMoveSheet(id) {
   const tx = currentTx.find(t => String(t.id) === String(id));
   moveTxId = id;
-
   if (tx) {
     document.getElementById('moveAmount').textContent = fmtRs(tx.amount);
     document.getElementById('moveMeta').textContent = fmtWhen(tx.date, tx.time);
     document.querySelectorAll('#moveCatChips .cat-chip').forEach(c => {
       c.classList.toggle('selected', c.dataset.cat === (tx.category || ''));
     });
-  } else {
-    document.getElementById('moveAmount').textContent = '—';
-    document.getElementById('moveMeta').textContent = '';
   }
-
   moveOverlay.classList.add('open');
 }
-
 function closeMoveSheet() {
   moveOverlay.classList.remove('open');
   moveTxId = null;
 }
-
 document.getElementById('moveClose').addEventListener('click', closeMoveSheet);
 document.getElementById('moveCancel').addEventListener('click', closeMoveSheet);
 moveOverlay.addEventListener('click', (e) => { if (e.target === moveOverlay) closeMoveSheet(); });
@@ -1295,7 +1365,6 @@ async function loadAll(days) {
   await Promise.all([loadChart(days), loadTransactions(days)]);
 }
 
-/* ---------- FILTERS ---------- */
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1306,7 +1375,6 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 
 /* ---------- ADD SHEET ---------- */
 const overlay = document.getElementById('overlay');
-
 function openSheet() {
   const now = new Date();
   document.getElementById('mDate').value = now.toISOString().split('T')[0];
@@ -1437,13 +1505,15 @@ inboxBtn.addEventListener('click', () => {
   pendingOverlay.classList.add('open');
   loadPendingList();
 });
-
 document.getElementById('pendingClose').addEventListener('click', () => pendingOverlay.classList.remove('open'));
 pendingOverlay.addEventListener('click', (e) => { if (e.target === pendingOverlay) pendingOverlay.classList.remove('open'); });
 
-/* ---------- PUSH SUBSCRIPTION ---------- */
-const subscribeCard = document.getElementById('subscribeCard');
-const subscribeBtn = document.getElementById('subscribeBtn');
+/* ---------- SETTINGS + PUSH ---------- */
+const settingsOverlay = document.getElementById('settingsOverlay');
+const pushStatusDot = document.getElementById('pushStatusDot');
+const pushStatusText = document.getElementById('pushStatusText');
+const pushToggleBtn = document.getElementById('pushToggleBtn');
+const pushResetBtn = document.getElementById('pushResetBtn');
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -1454,43 +1524,129 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
-async function initPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const reg = await navigator.serviceWorker.ready;
-  const existing = await reg.pushManager.getSubscription();
-  if (existing) { subscribeCard.classList.add('hidden'); return; }
-  subscribeCard.classList.remove('hidden');
-  subscribeBtn.addEventListener('click', async () => {
-    subscribeBtn.disabled = true;
-    subscribeBtn.textContent = 'Enabling…';
-    try {
+async function updatePushStatus() {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      pushStatusDot.className = 'status-dot off';
+      pushStatusText.textContent = 'Not supported on this device';
+      pushToggleBtn.disabled = true;
+      return;
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+
+    if (sub) {
+      pushStatusDot.className = 'status-dot on';
+      pushStatusText.textContent = 'Subscribed';
+      pushToggleBtn.textContent = 'Disable';
+      pushToggleBtn.classList.add('danger');
+      pushToggleBtn.disabled = false;
+    } else {
+      pushStatusDot.className = 'status-dot off';
+      pushStatusText.textContent = 'Not subscribed';
+      pushToggleBtn.textContent = 'Enable';
+      pushToggleBtn.classList.remove('danger');
+      pushToggleBtn.disabled = false;
+    }
+  } catch (err) {
+    console.error(err);
+    pushStatusDot.className = 'status-dot off';
+    pushStatusText.textContent = 'Error: ' + (err.message || 'unknown');
+  }
+}
+
+pushToggleBtn.addEventListener('click', async () => {
+  pushToggleBtn.disabled = true;
+  const orig = pushToggleBtn.textContent;
+  pushToggleBtn.textContent = 'Working…';
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+
+    if (existing) {
+      // Disable
+      await existing.unsubscribe();
+      await fetch('/force-clear-subscriptions').catch(() => {});
+      pushStatusText.textContent = 'Disabled';
+      pushStatusDot.className = 'status-dot off';
+    } else {
+      // Enable
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') { subscribeBtn.disabled = false; subscribeBtn.textContent = 'Enable'; return; }
+      if (permission !== 'granted') {
+        alert('Permission was not granted. Enable notifications in iPhone Settings → Notifications.');
+        pushToggleBtn.disabled = false;
+        pushToggleBtn.textContent = orig;
+        return;
+      }
+
       const keyRes = await fetch('/vapid-public-key');
       const keyData = await keyRes.json();
+
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
       });
+
       await fetch('/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sub)
       });
-      subscribeCard.classList.add('hidden');
-    } catch (err) {
-      console.error(err);
-      subscribeBtn.disabled = false;
-      subscribeBtn.textContent = 'Enable';
+
+      pushStatusText.textContent = 'Subscribed';
+      pushStatusDot.className = 'status-dot on';
     }
-  });
-}
+
+    await updatePushStatus();
+  } catch (err) {
+    console.error(err);
+    alert('Error: ' + (err.message || 'unknown'));
+  } finally {
+    pushToggleBtn.disabled = false;
+  }
+});
+
+pushResetBtn.addEventListener('click', async () => {
+  if (!confirm('Force reset push subscription on this device?')) return;
+  pushResetBtn.disabled = true;
+  pushResetBtn.textContent = 'Resetting…';
+
+  try {
+    // Clear server side
+    await fetch('/force-clear-subscriptions').catch(() => {});
+
+    // Clear client side
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const reg of regs) {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    }
+
+    pushStatusText.textContent = 'Not subscribed';
+    pushStatusDot.className = 'status-dot off';
+    await updatePushStatus();
+  } catch (err) {
+    alert('Reset failed: ' + (err.message || 'unknown'));
+  } finally {
+    pushResetBtn.disabled = false;
+    pushResetBtn.textContent = 'Reset';
+  }
+});
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  settingsOverlay.classList.add('open');
+  updatePushStatus();
+});
+document.getElementById('settingsClose').addEventListener('click', () => settingsOverlay.classList.remove('open'));
+settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('open'); });
 
 /* ---------- INIT ---------- */
 loadAll(30);
 refreshPending();
 setInterval(refreshPending, 30000);
-initPush();
+updatePushStatus();
 </script>
 
 </body>
