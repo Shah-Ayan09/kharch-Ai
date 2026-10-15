@@ -1524,7 +1524,20 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(label + ' timed out')), ms)
+    )
+  ]);
+}
+
 async function updatePushStatus() {
+  pushStatusDot.className = 'status-dot';
+  pushStatusText.textContent = 'Checking…';
+  pushToggleBtn.disabled = true;
+
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       pushStatusDot.className = 'status-dot off';
@@ -1533,8 +1546,17 @@ async function updatePushStatus() {
       return;
     }
 
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
+    const reg = await withTimeout(
+      navigator.serviceWorker.ready,
+      5000,
+      'Service worker'
+    );
+
+    const sub = await withTimeout(
+      reg.pushManager.getSubscription(),
+      5000,
+      'Subscription check'
+    );
 
     if (sub) {
       pushStatusDot.className = 'status-dot on';
@@ -1552,7 +1574,10 @@ async function updatePushStatus() {
   } catch (err) {
     console.error(err);
     pushStatusDot.className = 'status-dot off';
-    pushStatusText.textContent = 'Error: ' + (err.message || 'unknown');
+    pushStatusText.textContent = err.message || 'Error';
+    pushToggleBtn.textContent = 'Retry';
+    pushToggleBtn.classList.remove('danger');
+    pushToggleBtn.disabled = false;
   }
 }
 
@@ -1562,8 +1587,8 @@ pushToggleBtn.addEventListener('click', async () => {
   pushToggleBtn.textContent = 'Working…';
 
   try {
-    const reg = await navigator.serviceWorker.ready;
-    const existing = await reg.pushManager.getSubscription();
+        const reg = await withTimeout(navigator.serviceWorker.ready, 5000, 'Service worker');
+    const existing = await withTimeout(reg.pushManager.getSubscription(), 5000, 'Subscription check');
 
     if (existing) {
       // Disable
@@ -1584,10 +1609,14 @@ pushToggleBtn.addEventListener('click', async () => {
       const keyRes = await fetch('/vapid-public-key');
       const keyData = await keyRes.json();
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
-      });
+   const sub = await withTimeout(
+  reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+  }),
+  10000,
+  'Subscribe'
+);
 
       await fetch('/subscribe', {
         method: 'POST',
