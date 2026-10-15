@@ -1536,102 +1536,101 @@ function withTimeout(promise, ms, label) {
 async function updatePushStatus() {
   pushStatusDot.className = 'status-dot';
   pushStatusText.textContent = 'Checking…';
-  pushToggleBtn.disabled = true;
+  pushToggleBtn.disabled = false;
+  pushToggleBtn.textContent = 'Enable';
+  pushToggleBtn.classList.remove('danger');
 
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       pushStatusDot.className = 'status-dot off';
-      pushStatusText.textContent = 'Not supported on this device';
-      pushToggleBtn.disabled = true;
+      pushStatusText.textContent = 'Not supported';
       return;
     }
 
-    const reg = await withTimeout(
-      navigator.serviceWorker.ready,
-      5000,
-      'Service worker'
-    );
-
-    const sub = await withTimeout(
-      reg.pushManager.getSubscription(),
-      5000,
-      'Subscription check'
-    );
+    const reg = await withTimeout(navigator.serviceWorker.ready, 8000, 'Service worker');
+    const sub = await withTimeout(reg.pushManager.getSubscription(), 8000, 'Subscription');
 
     if (sub) {
       pushStatusDot.className = 'status-dot on';
       pushStatusText.textContent = 'Subscribed';
       pushToggleBtn.textContent = 'Disable';
       pushToggleBtn.classList.add('danger');
-      pushToggleBtn.disabled = false;
     } else {
       pushStatusDot.className = 'status-dot off';
       pushStatusText.textContent = 'Not subscribed';
       pushToggleBtn.textContent = 'Enable';
-      pushToggleBtn.classList.remove('danger');
-      pushToggleBtn.disabled = false;
     }
   } catch (err) {
     console.error(err);
     pushStatusDot.className = 'status-dot off';
-    pushStatusText.textContent = err.message || 'Error';
-    pushToggleBtn.textContent = 'Retry';
-    pushToggleBtn.classList.remove('danger');
-    pushToggleBtn.disabled = false;
+    pushStatusText.textContent = 'Not subscribed';
+    pushToggleBtn.textContent = 'Enable';
   }
 }
 
 pushToggleBtn.addEventListener('click', async () => {
   pushToggleBtn.disabled = true;
-  const orig = pushToggleBtn.textContent;
+  const wasDisabled = pushToggleBtn.classList.contains('danger');
   pushToggleBtn.textContent = 'Working…';
 
   try {
-        const reg = await withTimeout(navigator.serviceWorker.ready, 5000, 'Service worker');
-    const existing = await withTimeout(reg.pushManager.getSubscription(), 5000, 'Subscription check');
-
-    if (existing) {
-      // Disable
-      await existing.unsubscribe();
-      await fetch('/force-clear-subscriptions').catch(() => {});
-      pushStatusText.textContent = 'Disabled';
-      pushStatusDot.className = 'status-dot off';
-    } else {
-      // Enable
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        alert('Permission was not granted. Enable notifications in iPhone Settings → Notifications.');
-        pushToggleBtn.disabled = false;
-        pushToggleBtn.textContent = orig;
-        return;
-      }
-
-      const keyRes = await fetch('/vapid-public-key');
-      const keyData = await keyRes.json();
-
-   const sub = await withTimeout(
-  reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
-  }),
-  10000,
-  'Subscribe'
-);
-
-      await fetch('/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub)
-      });
-
-      pushStatusText.textContent = 'Subscribed';
-      pushStatusDot.className = 'status-dot on';
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications are not supported on this device.');
+      return;
     }
 
-    await updatePushStatus();
+    if (wasDisabled) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) await existing.unsubscribe();
+      } catch (e) {
+        console.error('Unsubscribe error:', e);
+      }
+      await fetch('/force-clear-subscriptions').catch(() => {});
+      pushStatusDot.className = 'status-dot off';
+      pushStatusText.textContent = 'Disabled';
+      pushToggleBtn.textContent = 'Enable';
+      pushToggleBtn.classList.remove('danger');
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      alert('Permission was not granted. Enable notifications in iPhone Settings → Notifications.');
+      pushToggleBtn.textContent = 'Enable';
+      return;
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+    let existing = await reg.pushManager.getSubscription();
+
+    if (existing) {
+      await existing.unsubscribe();
+    }
+
+    const keyRes = await fetch('/vapid-public-key');
+    const keyData = await keyRes.json();
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+    });
+
+    await fetch('/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub)
+    });
+
+    pushStatusDot.className = 'status-dot on';
+    pushStatusText.textContent = 'Subscribed';
+    pushToggleBtn.textContent = 'Disable';
+    pushToggleBtn.classList.add('danger');
   } catch (err) {
     console.error(err);
     alert('Error: ' + (err.message || 'unknown'));
+    pushToggleBtn.textContent = wasDisabled ? 'Disable' : 'Enable';
   } finally {
     pushToggleBtn.disabled = false;
   }
@@ -1643,10 +1642,8 @@ pushResetBtn.addEventListener('click', async () => {
   pushResetBtn.textContent = 'Resetting…';
 
   try {
-    // Clear server side
     await fetch('/force-clear-subscriptions').catch(() => {});
 
-    // Clear client side
     const regs = await navigator.serviceWorker.getRegistrations();
     for (const reg of regs) {
       const sub = await reg.pushManager.getSubscription();
