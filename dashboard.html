@@ -467,12 +467,13 @@
     border-radius: 16px;
     position: relative;
     z-index: 1;
-    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translate3d(0, 0, 0);
     touch-action: pan-y;
     will-change: transform;
   }
   .tx-row:active { background: var(--row-press); }
-  .tx-row.no-anim { transition: none; }
+ 
 
   .tx-badge {
     width: 40px;
@@ -1414,8 +1415,8 @@ async function loadTransactions(days, showSkeleton = true) {
 
 /* ---------- SWIPE ---------- */
 let openSwipe = null;
-const SWIPE_THRESHOLD_RATIO = 0.35; // 35% for categorize
-const SWIPE_DELETE_RATIO = 0.40;    // 40% for delete
+const SWIPE_RIGHT_RATIO = 0.35;
+const SWIPE_LEFT_RATIO = 0.40;
 
 function attachSwipe(swipeEl) {
   const rowEl = swipeEl.querySelector('.tx-row');
@@ -1423,31 +1424,75 @@ function attachSwipe(swipeEl) {
   const txId = swipeEl.dataset.id;
 
   let startX = 0, startY = 0;
+  let lastX = 0, lastT = 0;
+  let velocity = 0;
   let currentDx = 0;
   let dragging = false;
   let lockedDirection = null;
   let passedRight = false;
   let passedLeft = false;
+  let rafId = null;
 
-  const rightThreshold = () => window.innerWidth * SWIPE_THRESHOLD_RATIO;
-  const leftThreshold = () => window.innerWidth * SWIPE_DELETE_RATIO;
+  // Hint state tracker (to avoid redundant DOM writes)
+  let hintState = 'none'; // 'none' | 'right-idle' | 'right-ready' | 'left-idle' | 'left-ready'
 
-  const resetHint = () => {
-    hintEl.textContent = '';
+  const rightThreshold = () => window.innerWidth * SWIPE_RIGHT_RATIO;
+  const leftThreshold = () => window.innerWidth * SWIPE_LEFT_RATIO;
+
+  const setHint = (state) => {
+    if (state === hintState) return;
+    hintState = state;
+
     hintEl.classList.remove('right', 'left');
+
+    switch (state) {
+      case 'right-idle':
+        hintEl.textContent = 'Swipe right to categorize';
+        hintEl.style.textAlign = 'right';
+        hintEl.style.paddingRight = '20px';
+        hintEl.style.paddingLeft = '0';
+        break;
+      case 'right-ready':
+        hintEl.textContent = 'Release to categorize';
+        hintEl.classList.add('right');
+        hintEl.style.textAlign = 'right';
+        hintEl.style.paddingRight = '20px';
+        hintEl.style.paddingLeft = '0';
+        break;
+      case 'left-idle':
+        hintEl.textContent = 'Swipe left to delete';
+        hintEl.style.textAlign = 'left';
+        hintEl.style.paddingLeft = '20px';
+        hintEl.style.paddingRight = '0';
+        break;
+      case 'left-ready':
+        hintEl.textContent = 'Release to delete';
+        hintEl.classList.add('left');
+        hintEl.style.textAlign = 'left';
+        hintEl.style.paddingLeft = '20px';
+        hintEl.style.paddingRight = '0';
+        break;
+      default:
+        hintEl.textContent = '';
+    }
   };
 
-  const resetRow = (animate = true) => {
-    if (!animate) rowEl.classList.add('no-anim');
-    rowEl.style.transform = 'translateX(0px)';
-    if (!animate) {
-      void rowEl.offsetWidth;
-      rowEl.classList.remove('no-anim');
+  const paint = () => {
+    rafId = null;
+    rowEl.style.transform = `translate3d(${currentDx}px, 0, 0)`;
+
+    // Hint state (only writes when state actually changes)
+    if (currentDx > 0) {
+      setHint(currentDx >= rightThreshold() ? 'right-ready' : 'right-idle');
+    } else if (currentDx < 0) {
+      setHint(Math.abs(currentDx) >= leftThreshold() ? 'left-ready' : 'left-idle');
+    } else {
+      setHint('none');
     }
-    resetHint();
-    currentDx = 0;
-    passedRight = false;
-    passedLeft = false;
+  };
+
+  const scheduleRender = () => {
+    if (rafId === null) rafId = requestAnimationFrame(paint);
   };
 
   const start = (e) => {
@@ -1459,8 +1504,15 @@ function attachSwipe(swipeEl) {
     const t = e.touches ? e.touches[0] : e;
     startX = t.clientX;
     startY = t.clientY;
+    lastX = t.clientX;
+    lastT = performance.now();
+    velocity = 0;
+    currentDx = 0;
     dragging = false;
     lockedDirection = null;
+
+    // Freeze transition for the drag
+    rowEl.style.transition = 'none';
   };
 
   const move = (e) => {
@@ -1468,95 +1520,112 @@ function attachSwipe(swipeEl) {
     const dx = t.clientX - startX;
     const dy = t.clientY - startY;
 
+    // Lock direction on first significant movement
     if (!lockedDirection) {
-      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) lockedDirection = 'h';
-      else if (Math.abs(dy) > 8) lockedDirection = 'v';
+      if (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) {
+        lockedDirection = 'h';
+        openSwipe = swipeEl;
+      } else if (Math.abs(dy) > 6) {
+        lockedDirection = 'v';
+      }
     }
     if (lockedDirection !== 'h') return;
     if (e.cancelable) e.preventDefault();
 
     dragging = true;
-    currentDx = dx;
 
+    // Track velocity
+    const now = performance.now();
+    const dt = now - lastT;
+    if (dt > 0) {
+      velocity = (t.clientX - lastX) / dt; // px/ms
+    }
+    lastX = t.clientX;
+    lastT = now;
+
+    // Clamp
     const cap = window.innerWidth;
-    const clamped = Math.max(-cap, Math.min(cap, currentDx));
+    currentDx = Math.max(-cap, Math.min(cap, dx));
 
-    rowEl.classList.add('no-anim');
-    rowEl.style.transform = `translateX(${clamped}px)`;
-    rowEl.classList.remove('no-anim');
+    // Threshold haptics
+    if (currentDx > 0) {
+      const ready = currentDx >= rightThreshold();
+      if (ready && !passedRight) { haptic(); passedRight = true; }
+      if (!ready) passedRight = false;
+    } else if (currentDx < 0) {
+      const ready = Math.abs(currentDx) >= leftThreshold();
+      if (ready && !passedLeft) { haptic(); passedLeft = true; }
+      if (!ready) passedLeft = false;
+    }
 
-    // RIGHT swipe = categorize
-    if (clamped > 0) {
-      hintEl.style.textAlign = 'right';
-      hintEl.style.paddingRight = '20px';
-      hintEl.style.paddingLeft = '0';
-      if (clamped >= rightThreshold()) {
-        if (!passedRight) { haptic(); passedRight = true; }
-        hintEl.textContent = 'Release to categorize';
-        hintEl.classList.add('right');
-        hintEl.classList.remove('left');
-      } else {
-        passedRight = false;
-        hintEl.textContent = 'Swipe right to categorize';
-        hintEl.classList.remove('right', 'left');
-      }
-    }
-    // LEFT swipe = delete
-    else if (clamped < 0) {
-      hintEl.style.textAlign = 'left';
-      hintEl.style.paddingLeft = '20px';
-      hintEl.style.paddingRight = '0';
-      if (Math.abs(clamped) >= leftThreshold()) {
-        if (!passedLeft) { haptic(); passedLeft = true; }
-        hintEl.textContent = 'Release to delete';
-        hintEl.classList.add('left');
-        hintEl.classList.remove('right');
-      } else {
-        passedLeft = false;
-        hintEl.textContent = 'Swipe left to delete';
-        hintEl.classList.remove('right', 'left');
-      }
-    } else {
-      resetHint();
-    }
+    scheduleRender();
   };
 
   const end = () => {
-    const dx = currentDx;
-    if (!dragging) { resetRow(); return; }
-    const wantRight = dx >= rightThreshold();
-    const wantLeft = Math.abs(dx) >= leftThreshold();
+    if (!dragging) {
+      // No drag happened — snap back and restore transition
+      rowEl.style.transition = '';
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      currentDx = 0;
+      rowEl.style.transform = 'translate3d(0,0,0)';
+      setHint('none');
+      openSwipe = null;
+      return;
+    }
 
-    resetRow(true);
+    const wasRight = currentDx >= rightThreshold();
+    const wasLeft = Math.abs(currentDx) >= leftThreshold();
+    const startDx = currentDx;
+
+    // Restore transition for the snap back
+    rowEl.style.transition = '';
     openSwipe = null;
 
-    if (wantRight) {
+    // Snap back with a spring-like feel
+    rowEl.style.transform = 'translate3d(0,0,0)';
+    setHint('none');
+    currentDx = 0;
+
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+
+    if (wasRight) {
       setTimeout(() => openMoveSheet(txId), 220);
-    } else if (wantLeft) {
+    } else if (wasLeft) {
       setTimeout(() => confirmDeleteSwipe(txId), 220);
     }
+  };
+
+  const cancel = () => {
+    rowEl.style.transition = '';
+    rowEl.style.transform = 'translate3d(0,0,0)';
+    setHint('none');
+    currentDx = 0;
+    dragging = false;
+    openSwipe = null;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   };
 
   rowEl.addEventListener('touchstart', start, { passive: true });
   rowEl.addEventListener('touchmove', move, { passive: false });
   rowEl.addEventListener('touchend', end);
-  rowEl.addEventListener('touchcancel', end);
+  rowEl.addEventListener('touchcancel', cancel);
+
   rowEl.addEventListener('mousedown', start);
   rowEl.addEventListener('mousemove', move);
   rowEl.addEventListener('mouseup', end);
-  rowEl.addEventListener('mouseleave', end);
+  rowEl.addEventListener('mouseleave', cancel);
 
-  swipeEl.addEventListener('swipe-reset', () => resetRow(true));
+  swipeEl.addEventListener('swipe-reset', cancel);
 }
 
 function confirmDeleteSwipe(id) {
   if (!confirm('Remove this transaction?')) return;
   const swipe = document.querySelector(`.tx-swipe[data-id="${id}"]`);
   if (swipe) swipe.classList.add('removing');
-  fetch(`/api/transaction/${id}`, { method: 'DELETE' }).catch(err => {
+  fetch(`/api/transaction/${id}`, { method: 'DELETE' }).catch(() => {
     alert('Failed to remove');
     if (swipe) swipe.classList.remove('removing');
-    loadAll(currentDays);
+    loadAll(currentDays, false);
   });
   setTimeout(() => {
     if (swipe) swipe.remove();
@@ -1564,7 +1633,6 @@ function confirmDeleteSwipe(id) {
     refreshPending();
   }, 240);
 }
-
 /* ---------- MOVE SHEET ---------- */
 const moveOverlay = document.getElementById('moveOverlay');
 let moveTxId = null;
