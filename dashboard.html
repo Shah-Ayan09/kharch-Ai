@@ -434,27 +434,39 @@
   /* The hint slides in from behind. It's clipped and left-aligned so the
      text is only revealed as the row moves. */
   .tx-swipe-hint {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: -0.005em;
-    color: #FFFFFF;
-    pointer-events: none;
-    padding: 0 16px;
-    text-align: center;
-    /* Color starts neutral and changes when active */
-    background: #232B3A;
-    transition: background 120ms ease;
-  }
-  .tx-swipe-hint.right { background: var(--accent); }
-  .tx-swipe-hint.left  { background: var(--danger); }
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  color: #FFFFFF;
+  pointer-events: none;
+  background: #232B3A;
+  transition: background 120ms ease;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* Swipe right → text anchored LEFT, revealed left-to-right */
+.tx-swipe-hint.from-left {
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+/* Swipe left → text anchored RIGHT, revealed right-to-left */
+.tx-swipe-hint.from-right {
+  justify-content: flex-end;
+  padding-right: 20px;
+}
+
+.tx-swipe-hint.right { background: var(--accent); }
+.tx-swipe-hint.left  { background: var(--danger); }
 
   /* The row itself slides */
   .tx-row {
@@ -1440,43 +1452,32 @@ function attachSwipe(swipeEl) {
   const leftThreshold = () => window.innerWidth * SWIPE_LEFT_RATIO;
 
   const setHint = (state) => {
-    if (state === hintState) return;
-    hintState = state;
+  if (state === hintState) return;
+  hintState = state;
 
-    hintEl.classList.remove('right', 'left');
+  hintEl.classList.remove('right', 'left', 'from-left', 'from-right');
 
-    switch (state) {
-      case 'right-idle':
-        hintEl.textContent = 'Swipe right to categorize';
-        hintEl.style.textAlign = 'right';
-        hintEl.style.paddingRight = '20px';
-        hintEl.style.paddingLeft = '0';
-        break;
-      case 'right-ready':
-        hintEl.textContent = 'Release to categorize';
-        hintEl.classList.add('right');
-        hintEl.style.textAlign = 'right';
-        hintEl.style.paddingRight = '20px';
-        hintEl.style.paddingLeft = '0';
-        break;
-      case 'left-idle':
-        hintEl.textContent = 'Swipe left to delete';
-        hintEl.style.textAlign = 'left';
-        hintEl.style.paddingLeft = '20px';
-        hintEl.style.paddingRight = '0';
-        break;
-      case 'left-ready':
-        hintEl.textContent = 'Release to delete';
-        hintEl.classList.add('left');
-        hintEl.style.textAlign = 'left';
-        hintEl.style.paddingLeft = '20px';
-        hintEl.style.paddingRight = '0';
-        break;
-      default:
-        hintEl.textContent = '';
-    }
-  };
-
+  switch (state) {
+    case 'right-idle':
+      hintEl.textContent = 'Swipe right to categorize';
+      hintEl.classList.add('from-left');
+      break;
+    case 'right-ready':
+      hintEl.textContent = 'Release to categorize';
+      hintEl.classList.add('right', 'from-left');
+      break;
+    case 'left-idle':
+      hintEl.textContent = 'Swipe left to delete';
+      hintEl.classList.add('from-right');
+      break;
+    case 'left-ready':
+      hintEl.textContent = 'Release to delete';
+      hintEl.classList.add('left', 'from-right');
+      break;
+    default:
+      hintEl.textContent = '';
+  }
+};
   const paint = () => {
     rafId = null;
     rowEl.style.transform = `translate3d(${currentDx}px, 0, 0)`;
