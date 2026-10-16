@@ -433,7 +433,7 @@
 
   /* The hint slides in from behind. It's clipped and left-aligned so the
      text is only revealed as the row moves. */
-  .tx-swipe-hint {
+.tx-swipe-hint {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -441,16 +441,47 @@
   right: 0;
   display: flex;
   align-items: center;
-  color: #FFFFFF;
   pointer-events: none;
+  background: transparent;  /* color applied to inner layer */
+  overflow: hidden;
+}
+
+/* The color layer — fades in based on swipe amount */
+.tx-swipe-hint-color {
+  position: absolute;
+  inset: 0;
   background: #232B3A;
-  transition: background 120ms ease;
+  opacity: 0;
+  transition: opacity 80ms linear;
+}
+.tx-swipe-hint.right .tx-swipe-hint-color { background: var(--accent); }
+.tx-swipe-hint.left  .tx-swipe-hint-color { background: var(--danger); }
+
+/* The moving text — translated with the finger */
+.tx-swipe-hint-text {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  color: #FFFFFF;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.005em;
   white-space: nowrap;
-  overflow: hidden;
   will-change: transform;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+/* Swipe right → text anchored LEFT */
+.tx-swipe-hint.from-left .tx-swipe-hint-text {
+  left: 0;
+}
+
+/* Swipe left → text anchored RIGHT */
+.tx-swipe-hint.from-right .tx-swipe-hint-text {
+  right: 0;
 }
 
 /* Swipe right → text anchored LEFT, revealed left-to-right */
@@ -1382,7 +1413,10 @@ function renderTxRow(t) {
   const cat = t.category || 'Uncategorized';
   return `
     <div class="tx-swipe" data-id="${t.id}">
-      <div class="tx-swipe-hint" data-hint></div>
+      <div class="tx-swipe-hint" data-hint>
+  <div class="tx-swipe-hint-color" data-hint-color></div>
+  <div class="tx-swipe-hint-text" data-hint-text></div>
+</div>
       <div class="tx-row" data-id="${t.id}">
         <div class="tx-badge" data-cat="${cat}">${iconFor(cat)}</div>
         <div class="tx-info">
@@ -1433,62 +1467,94 @@ const SWIPE_LEFT_RATIO = 0.40;
 function attachSwipe(swipeEl) {
   const rowEl = swipeEl.querySelector('.tx-row');
   const hintEl = swipeEl.querySelector('[data-hint]');
+  const hintColor = swipeEl.querySelector('[data-hint-color]');
+  const hintText = swipeEl.querySelector('[data-hint-text]');
   const txId = swipeEl.dataset.id;
 
   let startX = 0, startY = 0;
-  let lastX = 0, lastT = 0;
-  let velocity = 0;
   let currentDx = 0;
   let dragging = false;
   let lockedDirection = null;
   let passedRight = false;
   let passedLeft = false;
   let rafId = null;
-
-  // Hint state tracker (to avoid redundant DOM writes)
-  let hintState = 'none'; // 'none' | 'right-idle' | 'right-ready' | 'left-idle' | 'left-ready'
+  let currentDirection = null; // 'right' | 'left' | null
 
   const rightThreshold = () => window.innerWidth * SWIPE_RIGHT_RATIO;
   const leftThreshold = () => window.innerWidth * SWIPE_LEFT_RATIO;
 
-  const setHint = (state) => {
-  if (state === hintState) return;
-  hintState = state;
+  const clearHint = () => {
+    currentDirection = null;
+    hintEl.classList.remove('right', 'left', 'from-left', 'from-right');
+    hintColor.style.opacity = '0';
+    hintText.textContent = '';
+    hintText.style.transform = 'translate3d(0,0,0)';
+  };
 
-  hintEl.classList.remove('right', 'left', 'from-left', 'from-right');
-
-  switch (state) {
-    case 'right-idle':
-      hintEl.textContent = 'Swipe right to categorize';
-      hintEl.classList.add('from-left');
-      break;
-    case 'right-ready':
-      hintEl.textContent = 'Release to categorize';
-      hintEl.classList.add('right', 'from-left');
-      break;
-    case 'left-idle':
-      hintEl.textContent = 'Swipe left to delete';
-      hintEl.classList.add('from-right');
-      break;
-    case 'left-ready':
-      hintEl.textContent = 'Release to delete';
-      hintEl.classList.add('left', 'from-right');
-      break;
-    default:
-      hintEl.textContent = '';
-  }
-};
   const paint = () => {
     rafId = null;
+
+    // Row follows finger
     rowEl.style.transform = `translate3d(${currentDx}px, 0, 0)`;
 
-    // Hint state (only writes when state actually changes)
     if (currentDx > 0) {
-      setHint(currentDx >= rightThreshold() ? 'right-ready' : 'right-idle');
+      // SWIPING RIGHT → categorize
+      if (currentDirection !== 'right') {
+        currentDirection = 'right';
+        hintEl.classList.remove('left', 'from-right');
+        hintEl.classList.add('right', 'from-left');
+        hintText.textContent = 'Swipe right to categorize';
+      }
+
+      // Color opacity: fade in as soon as you start moving, full by threshold
+      const colorProgress = Math.min(1, currentDx / rightThreshold());
+      hintColor.style.opacity = (colorProgress * 0.85).toFixed(3);
+
+      // Text slides with the row
+      // The text starts off-screen to the left, and enters as you drag.
+      // At dx = 0, text is fully off-screen (hidden behind row).
+      // At dx = width, text has fully passed through.
+      // Since the row slides right by dx, the visible area is [0, dx].
+      // We want the text to be positioned within that visible strip.
+      // Simplest: translate the text by dx so it rides the left edge of the reveal.
+      hintText.style.transform = `translate3d(${currentDx}px, 0, 0)`;
+
+      // Threshold crossing
+      if (currentDx >= rightThreshold()) {
+        if (!passedRight) { haptic(); passedRight = true; }
+        hintText.textContent = 'Release to categorize';
+      } else {
+        if (passedRight) {
+          passedRight = false;
+          hintText.textContent = 'Swipe right to categorize';
+        }
+      }
     } else if (currentDx < 0) {
-      setHint(Math.abs(currentDx) >= leftThreshold() ? 'left-ready' : 'left-idle');
+      // SWIPING LEFT → delete
+      if (currentDirection !== 'left') {
+        currentDirection = 'left';
+        hintEl.classList.remove('right', 'from-left');
+        hintEl.classList.add('left', 'from-right');
+        hintText.textContent = 'Swipe left to delete';
+      }
+
+      const absDx = Math.abs(currentDx);
+      const colorProgress = Math.min(1, absDx / leftThreshold());
+      hintColor.style.opacity = (colorProgress * 0.85).toFixed(3);
+
+      hintText.style.transform = `translate3d(${currentDx}px, 0, 0)`;
+
+      if (absDx >= leftThreshold()) {
+        if (!passedLeft) { haptic(); passedLeft = true; }
+        hintText.textContent = 'Release to delete';
+      } else {
+        if (passedLeft) {
+          passedLeft = false;
+          hintText.textContent = 'Swipe left to delete';
+        }
+      }
     } else {
-      setHint('none');
+      clearHint();
     }
   };
 
@@ -1505,14 +1571,9 @@ function attachSwipe(swipeEl) {
     const t = e.touches ? e.touches[0] : e;
     startX = t.clientX;
     startY = t.clientY;
-    lastX = t.clientX;
-    lastT = performance.now();
-    velocity = 0;
     currentDx = 0;
     dragging = false;
     lockedDirection = null;
-
-    // Freeze transition for the drag
     rowEl.style.transition = 'none';
   };
 
@@ -1521,7 +1582,6 @@ function attachSwipe(swipeEl) {
     const dx = t.clientX - startX;
     const dy = t.clientY - startY;
 
-    // Lock direction on first significant movement
     if (!lockedDirection) {
       if (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) {
         lockedDirection = 'h';
@@ -1534,72 +1594,36 @@ function attachSwipe(swipeEl) {
     if (e.cancelable) e.preventDefault();
 
     dragging = true;
-
-    // Track velocity
-    const now = performance.now();
-    const dt = now - lastT;
-    if (dt > 0) {
-      velocity = (t.clientX - lastX) / dt; // px/ms
-    }
-    lastX = t.clientX;
-    lastT = now;
-
-    // Clamp
     const cap = window.innerWidth;
     currentDx = Math.max(-cap, Math.min(cap, dx));
-
-    // Threshold haptics
-    if (currentDx > 0) {
-      const ready = currentDx >= rightThreshold();
-      if (ready && !passedRight) { haptic(); passedRight = true; }
-      if (!ready) passedRight = false;
-    } else if (currentDx < 0) {
-      const ready = Math.abs(currentDx) >= leftThreshold();
-      if (ready && !passedLeft) { haptic(); passedLeft = true; }
-      if (!ready) passedLeft = false;
-    }
 
     scheduleRender();
   };
 
   const end = () => {
-    if (!dragging) {
-      // No drag happened — snap back and restore transition
-      rowEl.style.transition = '';
-      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-      currentDx = 0;
-      rowEl.style.transform = 'translate3d(0,0,0)';
-      setHint('none');
-      openSwipe = null;
-      return;
-    }
-
     const wasRight = currentDx >= rightThreshold();
     const wasLeft = Math.abs(currentDx) >= leftThreshold();
-    const startDx = currentDx;
 
-    // Restore transition for the snap back
     rowEl.style.transition = '';
-    openSwipe = null;
-
-    // Snap back with a spring-like feel
     rowEl.style.transform = 'translate3d(0,0,0)';
-    setHint('none');
+    clearHint();
     currentDx = 0;
+    openSwipe = null;
 
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 
-    if (wasRight) {
+    if (dragging && wasRight) {
       setTimeout(() => openMoveSheet(txId), 220);
-    } else if (wasLeft) {
+    } else if (dragging && wasLeft) {
       setTimeout(() => confirmDeleteSwipe(txId), 220);
     }
+    dragging = false;
   };
 
   const cancel = () => {
     rowEl.style.transition = '';
     rowEl.style.transform = 'translate3d(0,0,0)';
-    setHint('none');
+    clearHint();
     currentDx = 0;
     dragging = false;
     openSwipe = null;
