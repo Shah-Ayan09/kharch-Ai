@@ -151,7 +151,6 @@
     50% { transform: scale(1.3); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
   }
 
-  /* Inbox spinner (while loading first time) */
   .icon-btn .spinner {
     position: absolute;
     inset: 0;
@@ -247,7 +246,6 @@
     touch-action: none;
   }
 
-  /* Ring skeleton (shown while loading) */
   .ring-skeleton {
     position: absolute;
     inset: 0;
@@ -423,7 +421,7 @@
     flex-shrink: 0;
   }
 
-  /* ---------- SWIPE CONTAINER ---------- */
+  /* ---------- SWIPE ---------- */
   .tx-swipe {
     position: relative;
     border-radius: 16px;
@@ -431,75 +429,38 @@
     background: transparent;
   }
 
-  /* The hint slides in from behind. It's clipped and left-aligned so the
-     text is only revealed as the row moves. */
-.tx-swipe-hint {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  pointer-events: none;
-  background: transparent;  /* color applied to inner layer */
-  overflow: hidden;
-}
+  /* The reveal layers sit behind the row.
+     Each is clipped to only show the swiped portion via clip-path. */
+  .tx-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    pointer-events: none;
+    will-change: clip-path;
+  }
 
-/* The color layer — fades in based on swipe amount */
-.tx-swipe-hint-color {
-  position: absolute;
-  inset: 0;
-  background: #232B3A;
-  opacity: 0;
-  transition: opacity 80ms linear;
-}
-.tx-swipe-hint.right .tx-swipe-hint-color { background: var(--accent); }
-.tx-swipe-hint.left  .tx-swipe-hint-color { background: var(--danger); }
+  /* Swipe right — blue, text anchored LEFT, revealed from left */
+  .tx-reveal-right {
+    background: var(--accent);
+    justify-content: flex-start;
+    padding-left: 20px;
+    clip-path: inset(0 100% 0 0);
+  }
 
-/* The moving text — translated with the finger */
-.tx-swipe-hint-text {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  color: #FFFFFF;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  will-change: transform;
-  padding: 0 20px;
-  pointer-events: none;
-}
+  /* Swipe left — red, text anchored RIGHT, revealed from right */
+  .tx-reveal-left {
+    background: var(--danger);
+    justify-content: flex-end;
+    padding-right: 20px;
+    clip-path: inset(0 0 0 100%);
+  }
 
-/* Swipe right → text anchored LEFT */
-.tx-swipe-hint.from-left .tx-swipe-hint-text {
-  left: 0;
-}
-
-/* Swipe left → text anchored RIGHT */
-.tx-swipe-hint.from-right .tx-swipe-hint-text {
-  right: 0;
-}
-
-/* Swipe right → text anchored LEFT, revealed left-to-right */
-.tx-swipe-hint.from-left {
-  justify-content: flex-start;
-  padding-left: 20px;
-}
-
-/* Swipe left → text anchored RIGHT, revealed right-to-left */
-.tx-swipe-hint.from-right {
-  justify-content: flex-end;
-  padding-right: 20px;
-}
-
-.tx-swipe-hint.right { background: var(--accent); }
-.tx-swipe-hint.left  { background: var(--danger); }
-
-  /* The row itself slides */
   .tx-row {
     display: flex;
     align-items: center;
@@ -510,13 +471,12 @@
     border-radius: 16px;
     position: relative;
     z-index: 1;
-      transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
-  transform: translate3d(0, 0, 0);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translate3d(0, 0, 0);
     touch-action: pan-y;
     will-change: transform;
   }
   .tx-row:active { background: var(--row-press); }
- 
 
   .tx-badge {
     width: 40px;
@@ -578,7 +538,6 @@
     flex-shrink: 0;
   }
 
-  /* Row removed (optimistic delete) */
   .tx-swipe.removing {
     animation: collapseRow 220ms ease forwards;
   }
@@ -794,9 +753,7 @@
   .btn-primary:active { transform: scale(0.99); }
 
   /* ---------- SETTINGS SHEET ---------- */
-  .settings-group {
-    margin-bottom: 28px;
-  }
+  .settings-group { margin-bottom: 28px; }
   .settings-group-label {
     font-size: 12px;
     font-weight: 500;
@@ -818,10 +775,7 @@
     margin-bottom: 8px;
     cursor: pointer;
   }
-  .settings-item-body {
-    flex: 1;
-    min-width: 0;
-  }
+  .settings-item-body { flex: 1; min-width: 0; }
   .settings-item-title {
     font-size: 14px;
     font-weight: 500;
@@ -861,30 +815,20 @@
     font-weight: 600;
     flex-shrink: 0;
     min-height: 40px;
-    transition: background 150ms ease;
   }
-  .btn-settings:hover { background: var(--accent-hover); }
   .btn-settings:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-settings.danger {
     background: transparent;
     border: 1px solid rgba(220, 38, 38, 0.35);
     color: #F87171;
   }
-  .btn-settings.danger:hover {
-    background: rgba(220, 38, 38, 0.1);
-  }
   .btn-settings.subtle {
     background: rgba(255, 255, 255, 0.06);
     color: var(--fg);
   }
-  .btn-settings.subtle:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
+  .btn-settings.subtle:hover { background: rgba(255, 255, 255, 0.1); }
 
-  .settings-chevron {
-    color: var(--fg-subtle);
-    flex-shrink: 0;
-  }
+  .settings-chevron { color: var(--fg-subtle); flex-shrink: 0; }
 
   /* ---------- PENDING LIST ---------- */
   .pending-list {
@@ -902,10 +846,7 @@
     border-radius: 14px;
     color: var(--fg);
     text-decoration: none;
-    transition: background 150ms ease;
   }
-  .pending-row:hover { background: rgba(255, 255, 255, 0.06); }
-
   .pending-main {
     flex: 1;
     min-width: 0;
@@ -915,7 +856,6 @@
     text-decoration: none;
     color: inherit;
   }
-
   .pending-amt {
     font-size: 15px;
     font-weight: 600;
@@ -952,7 +892,6 @@
     font-size: 16px;
     line-height: 1;
     flex-shrink: 0;
-    transition: transform 100ms ease;
   }
   .pending-x:active { transform: scale(0.9); }
 
@@ -1000,9 +939,7 @@
     flex-shrink: 0;
     min-height: 36px;
   }
-  .btn-restore:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
+  .btn-restore:hover { background: rgba(255, 255, 255, 0.1); }
 
   @media (max-width: 400px) {
     .ring-wrap { width: 190px; height: 190px; }
@@ -1083,7 +1020,6 @@
 
     <div class="tx-scroll">
       <div class="tx-list" id="transactionList">
-        <!-- Skeletons injected by JS -->
       </div>
     </div>
   </div>
@@ -1176,9 +1112,7 @@
       <button class="sheet-close" id="pendingClose" aria-label="Close">×</button>
     </div>
 
-    <div class="pending-list" id="pendingList">
-      <!-- Skeletons injected by JS -->
-    </div>
+    <div class="pending-list" id="pendingList"></div>
   </div>
 </div>
 
@@ -1249,9 +1183,7 @@
       <span class="sheet-title">Trash</span>
       <button class="sheet-close" id="trashClose" aria-label="Close">×</button>
     </div>
-    <div id="trashList">
-      <!-- Items injected by JS -->
-    </div>
+    <div id="trashList"></div>
   </div>
 </div>
 
@@ -1273,41 +1205,28 @@ const CAT_ICON = {
   Uncategorized: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
 };
 
-/* ---------- SERVICE WORKER ---------- */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').catch(e => console.log(e));
 }
 
-/* ---------- HELPERS ---------- */
-function fmtRs(n) {
-  return 'Rs ' + Number(n || 0).toLocaleString();
-}
-function iconFor(cat) {
-  return CAT_ICON[cat] || CAT_ICON.Other;
-}
+function fmtRs(n) { return 'Rs ' + Number(n || 0).toLocaleString(); }
+function iconFor(cat) { return CAT_ICON[cat] || CAT_ICON.Other; }
 function fmtWhen(dateStr, timeStr) {
   try {
     const [y, m, d] = dateStr.split('-').map(Number);
     const [hh, mm] = timeStr.split(':').map(Number);
     const dt = new Date(y, m - 1, d, hh, mm);
     const now = new Date();
-    const sameDay = (a, b) =>
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate();
+    const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const t = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     if (sameDay(dt, now)) return `Today, ${t}`;
     if (sameDay(dt, yesterday)) return `Yesterday, ${t}`;
     return `${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${t}`;
-  } catch (e) {
-    return `${dateStr} · ${timeStr}`;
-  }
+  } catch (e) { return `${dateStr} · ${timeStr}`; }
 }
-function haptic() {
-  if (navigator.vibrate) navigator.vibrate(10);
-}
+function haptic() { if (navigator.vibrate) navigator.vibrate(10); }
 
 /* ---------- CHART ---------- */
 const tooltipEl = document.getElementById('tooltip');
@@ -1330,19 +1249,12 @@ function showTooltip(index) {
   tooltipEl.classList.add('visible');
   activeIndex = index;
 }
-function hideTooltip() {
-  tooltipEl.classList.remove('visible');
-  activeIndex = null;
-}
-function toggleTooltip(index) {
-  if (activeIndex === index) hideTooltip();
-  else showTooltip(index);
-}
+function hideTooltip() { tooltipEl.classList.remove('visible'); activeIndex = null; }
+function toggleTooltip(index) { if (activeIndex === index) hideTooltip(); else showTooltip(index); }
 
 async function loadChart(days) {
   const ringSkeleton = document.getElementById('ringSkeleton');
   const totalEl = document.getElementById('totalAmount');
-
   try {
     const res = await fetch(`/api/spending?days=${days}`);
     const data = await res.json();
@@ -1389,7 +1301,7 @@ async function loadChart(days) {
   }
 }
 
-/* ---------- SKELETON BUILDERS ---------- */
+/* ---------- SKELETONS ---------- */
 function skeletonRow() {
   return `
     <div class="skeleton-row">
@@ -1402,9 +1314,7 @@ function skeletonRow() {
     </div>
   `;
 }
-function renderSkeletons(count = 4) {
-  return Array(count).fill(skeletonRow()).join('');
-}
+function renderSkeletons(count = 4) { return Array(count).fill(skeletonRow()).join(''); }
 
 /* ---------- TRANSACTIONS ---------- */
 let currentTx = [];
@@ -1413,10 +1323,8 @@ function renderTxRow(t) {
   const cat = t.category || 'Uncategorized';
   return `
     <div class="tx-swipe" data-id="${t.id}">
-      <div class="tx-swipe-hint" data-hint>
-  <div class="tx-swipe-hint-color" data-hint-color></div>
-  <div class="tx-swipe-hint-text" data-hint-text></div>
-</div>
+      <div class="tx-reveal tx-reveal-right">Swipe right to categorize</div>
+      <div class="tx-reveal tx-reveal-left">Swipe left to delete</div>
       <div class="tx-row" data-id="${t.id}">
         <div class="tx-badge" data-cat="${cat}">${iconFor(cat)}</div>
         <div class="tx-info">
@@ -1431,44 +1339,33 @@ function renderTxRow(t) {
 
 async function loadTransactions(days, showSkeleton = true) {
   const list = document.getElementById('transactionList');
-
-  if (showSkeleton) {
-    list.innerHTML = renderSkeletons(4);
-  }
-
+  if (showSkeleton) list.innerHTML = renderSkeletons(4);
   try {
     const res = await fetch(`/api/transactions?days=${days}`);
     const tx = await res.json();
     currentTx = tx;
-
-    document.getElementById('txCount').textContent =
-      tx.length + (tx.length === 1 ? ' entry' : ' entries');
-
+    document.getElementById('txCount').textContent = tx.length + (tx.length === 1 ? ' entry' : ' entries');
     if (!tx || tx.length === 0) {
       list.innerHTML = '<div class="empty">No transactions yet</div>';
       return;
     }
-
     list.innerHTML = tx.map(renderTxRow).join('');
-    list.querySelectorAll('.tx-swipe').forEach(swipe => {
-      attachSwipe(swipe);
-    });
+    list.querySelectorAll('.tx-swipe').forEach(swipe => attachSwipe(swipe));
   } catch (err) {
     console.error(err);
     list.innerHTML = '<div class="empty">Could not load</div>';
   }
 }
 
-/* ---------- SWIPE ---------- */
+/* ---------- SWIPE (clip-path reveal) ---------- */
 let openSwipe = null;
 const SWIPE_RIGHT_RATIO = 0.35;
 const SWIPE_LEFT_RATIO = 0.40;
 
 function attachSwipe(swipeEl) {
   const rowEl = swipeEl.querySelector('.tx-row');
-  const hintEl = swipeEl.querySelector('[data-hint]');
-  const hintColor = swipeEl.querySelector('[data-hint-color]');
-  const hintText = swipeEl.querySelector('[data-hint-text]');
+  const revealRight = swipeEl.querySelector('.tx-reveal-right');
+  const revealLeft = swipeEl.querySelector('.tx-reveal-left');
   const txId = swipeEl.dataset.id;
 
   let startX = 0, startY = 0;
@@ -1478,89 +1375,33 @@ function attachSwipe(swipeEl) {
   let passedRight = false;
   let passedLeft = false;
   let rafId = null;
-  let currentDirection = null; // 'right' | 'left' | null
 
   const rightThreshold = () => window.innerWidth * SWIPE_RIGHT_RATIO;
   const leftThreshold = () => window.innerWidth * SWIPE_LEFT_RATIO;
 
-  const clearHint = () => {
-    currentDirection = null;
-    hintEl.classList.remove('right', 'left', 'from-left', 'from-right');
-    hintColor.style.opacity = '0';
-    hintText.textContent = '';
-    hintText.style.transform = 'translate3d(0,0,0)';
+  const resetReveal = () => {
+    revealRight.style.clipPath = 'inset(0 100% 0 0)';
+    revealLeft.style.clipPath  = 'inset(0 0 0 100%)';
   };
 
   const paint = () => {
     rafId = null;
-
-    // Row follows finger
     rowEl.style.transform = `translate3d(${currentDx}px, 0, 0)`;
 
     if (currentDx > 0) {
-      // SWIPING RIGHT → categorize
-      if (currentDirection !== 'right') {
-        currentDirection = 'right';
-        hintEl.classList.remove('left', 'from-right');
-        hintEl.classList.add('right', 'from-left');
-        hintText.textContent = 'Swipe right to categorize';
-      }
-
-      // Color opacity: fade in as soon as you start moving, full by threshold
-      const colorProgress = Math.min(1, currentDx / rightThreshold());
-      hintColor.style.opacity = (colorProgress * 0.85).toFixed(3);
-
-      // Text slides with the row
-      // The text starts off-screen to the left, and enters as you drag.
-      // At dx = 0, text is fully off-screen (hidden behind row).
-      // At dx = width, text has fully passed through.
-      // Since the row slides right by dx, the visible area is [0, dx].
-      // We want the text to be positioned within that visible strip.
-      // Simplest: translate the text by dx so it rides the left edge of the reveal.
-      hintText.style.transform = `translate3d(${currentDx}px, 0, 0)`;
-
-      // Threshold crossing
-      if (currentDx >= rightThreshold()) {
-        if (!passedRight) { haptic(); passedRight = true; }
-        hintText.textContent = 'Release to categorize';
-      } else {
-        if (passedRight) {
-          passedRight = false;
-          hintText.textContent = 'Swipe right to categorize';
-        }
-      }
+      const visible = Math.min(currentDx, window.innerWidth);
+      revealRight.style.clipPath = `inset(0 calc(100% - ${visible}px) 0 0)`;
+      revealLeft.style.clipPath = 'inset(0 0 0 100%)';
     } else if (currentDx < 0) {
-      // SWIPING LEFT → delete
-      if (currentDirection !== 'left') {
-        currentDirection = 'left';
-        hintEl.classList.remove('right', 'from-left');
-        hintEl.classList.add('left', 'from-right');
-        hintText.textContent = 'Swipe left to delete';
-      }
-
-      const absDx = Math.abs(currentDx);
-      const colorProgress = Math.min(1, absDx / leftThreshold());
-      hintColor.style.opacity = (colorProgress * 0.85).toFixed(3);
-
-      hintText.style.transform = `translate3d(${currentDx}px, 0, 0)`;
-
-      if (absDx >= leftThreshold()) {
-        if (!passedLeft) { haptic(); passedLeft = true; }
-        hintText.textContent = 'Release to delete';
-      } else {
-        if (passedLeft) {
-          passedLeft = false;
-          hintText.textContent = 'Swipe left to delete';
-        }
-      }
+      const visible = Math.min(Math.abs(currentDx), window.innerWidth);
+      revealLeft.style.clipPath = `inset(0 0 0 calc(100% - ${visible}px))`;
+      revealRight.style.clipPath = 'inset(0 100% 0 0)';
     } else {
-      clearHint();
+      resetReveal();
     }
   };
 
-  const scheduleRender = () => {
-    if (rafId === null) rafId = requestAnimationFrame(paint);
-  };
+  const scheduleRender = () => { if (rafId === null) rafId = requestAnimationFrame(paint); };
 
   const start = (e) => {
     if (openSwipe && openSwipe !== swipeEl) {
@@ -1574,6 +1415,8 @@ function attachSwipe(swipeEl) {
     currentDx = 0;
     dragging = false;
     lockedDirection = null;
+    passedRight = false;
+    passedLeft = false;
     rowEl.style.transition = 'none';
   };
 
@@ -1597,34 +1440,37 @@ function attachSwipe(swipeEl) {
     const cap = window.innerWidth;
     currentDx = Math.max(-cap, Math.min(cap, dx));
 
+    if (currentDx > 0 && currentDx >= rightThreshold()) {
+      if (!passedRight) { haptic(); passedRight = true; }
+    } else if (currentDx < 0 && Math.abs(currentDx) >= leftThreshold()) {
+      if (!passedLeft) { haptic(); passedLeft = true; }
+    }
+
     scheduleRender();
   };
 
   const end = () => {
     const wasRight = currentDx >= rightThreshold();
     const wasLeft = Math.abs(currentDx) >= leftThreshold();
+    const didDrag = dragging;
 
     rowEl.style.transition = '';
     rowEl.style.transform = 'translate3d(0,0,0)';
-    clearHint();
+    resetReveal();
     currentDx = 0;
     openSwipe = null;
-
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 
-    if (dragging && wasRight) {
-      setTimeout(() => openMoveSheet(txId), 220);
-    } else if (dragging && wasLeft) {
-      setTimeout(() => confirmDeleteSwipe(txId), 220);
-    }
+    if (didDrag && wasRight) setTimeout(() => openMoveSheet(txId), 220);
+    else if (didDrag && wasLeft) setTimeout(() => confirmDeleteSwipe(txId), 220);
     dragging = false;
   };
 
   const cancel = () => {
     rowEl.style.transition = '';
     rowEl.style.transform = 'translate3d(0,0,0)';
-    clearHint();
-    currentDx = 0;
+    resetReveal();
+    currentX = 0;
     dragging = false;
     openSwipe = null;
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
@@ -1634,13 +1480,13 @@ function attachSwipe(swipeEl) {
   rowEl.addEventListener('touchmove', move, { passive: false });
   rowEl.addEventListener('touchend', end);
   rowEl.addEventListener('touchcancel', cancel);
-
   rowEl.addEventListener('mousedown', start);
   rowEl.addEventListener('mousemove', move);
   rowEl.addEventListener('mouseup', end);
   rowEl.addEventListener('mouseleave', cancel);
-
   swipeEl.addEventListener('swipe-reset', cancel);
+
+  resetReveal();
 }
 
 function confirmDeleteSwipe(id) {
@@ -1658,6 +1504,7 @@ function confirmDeleteSwipe(id) {
     refreshPending();
   }, 240);
 }
+
 /* ---------- MOVE SHEET ---------- */
 const moveOverlay = document.getElementById('moveOverlay');
 let moveTxId = null;
@@ -1674,10 +1521,7 @@ function openMoveSheet(id) {
   }
   moveOverlay.classList.add('open');
 }
-function closeMoveSheet() {
-  moveOverlay.classList.remove('open');
-  moveTxId = null;
-}
+function closeMoveSheet() { moveOverlay.classList.remove('open'); moveTxId = null; }
 document.getElementById('moveClose').addEventListener('click', closeMoveSheet);
 document.getElementById('moveCancel').addEventListener('click', closeMoveSheet);
 moveOverlay.addEventListener('click', (e) => { if (e.target === moveOverlay) closeMoveSheet(); });
@@ -1688,7 +1532,6 @@ document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
     const id = moveTxId;
     if (!id) return;
 
-    // Optimistic: update the row instantly
     const tx = currentTx.find(t => String(t.id) === String(id));
     if (tx) tx.category = newCat;
     const row = document.querySelector(`.tx-swipe[data-id="${id}"]`);
@@ -1699,18 +1542,14 @@ document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
       badge.innerHTML = iconFor(newCat);
       catEl.textContent = newCat;
     }
-
-    // Close the sheet instantly
     closeMoveSheet();
 
-    // Fire the request in the background
     fetch('/api/update_category', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transaction_id: id, category: newCat })
     }).then(res => {
       if (!res.ok) throw new Error('failed');
-      // Background: refresh chart only
       loadChart(currentDays);
       refreshPending();
     }).catch(() => {
@@ -1723,10 +1562,7 @@ document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
 /* ---------- LOAD ---------- */
 async function loadAll(days, showSkeleton = true) {
   currentDays = days;
-  await Promise.all([
-    loadChart(days),
-    loadTransactions(days, showSkeleton)
-  ]);
+  await Promise.all([loadChart(days), loadTransactions(days, showSkeleton)]);
 }
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -1778,14 +1614,9 @@ document.getElementById('sheetSave').addEventListener('click', async () => {
       body: JSON.stringify({ amount, category, date, time })
     });
     const data = await res.json();
-    if (data.success) {
-      await loadAll(currentDays, false);
-    } else {
-      alert('Error: ' + (data.error || 'Unknown'));
-    }
-  } catch (err) {
-    alert('Failed to save.');
-  }
+    if (data.success) await loadAll(currentDays, false);
+    else alert('Error: ' + (data.error || 'Unknown'));
+  } catch (err) { alert('Failed to save.'); }
 });
 
 /* ---------- PENDING LIST ---------- */
@@ -1808,9 +1639,7 @@ async function refreshPending() {
       inboxBtn.classList.remove('has-pending');
       inboxBtn.classList.remove('pulse');
     }
-  } catch (err) {
-    console.error('Pending check failed:', err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 async function loadPendingList() {
@@ -1844,7 +1673,6 @@ async function loadPendingList() {
         if (!confirm('Remove this transaction?')) return;
         const row = btn.closest('.pending-row');
         if (row) row.style.opacity = '0.4';
-
         fetch(`/api/transaction/${id}`, { method: 'DELETE' })
           .then(res => {
             if (!res.ok) throw new Error('failed');
@@ -1858,15 +1686,10 @@ async function loadPendingList() {
           });
       });
     });
-  } catch (err) {
-    list.innerHTML = '<div class="empty">Could not load</div>';
-  }
+  } catch (err) { list.innerHTML = '<div class="empty">Could not load</div>'; }
 }
 
-inboxBtn.addEventListener('click', () => {
-  pendingOverlay.classList.add('open');
-  loadPendingList();
-});
+inboxBtn.addEventListener('click', () => { pendingOverlay.classList.add('open'); loadPendingList(); });
 document.getElementById('pendingClose').addEventListener('click', () => pendingOverlay.classList.remove('open'));
 pendingOverlay.addEventListener('click', (e) => { if (e.target === pendingOverlay) pendingOverlay.classList.remove('open'); });
 
@@ -1891,7 +1714,6 @@ async function updatePushStatus() {
   pushStatusText.textContent = 'Checking…';
   pushToggleBtn.textContent = 'Enable';
   pushToggleBtn.classList.remove('danger');
-
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       pushStatusDot.className = 'status-dot off';
@@ -1919,15 +1741,9 @@ pushToggleBtn.addEventListener('click', async () => {
   pushToggleBtn.disabled = true;
   const wasDisabled = pushToggleBtn.classList.contains('danger');
   pushToggleBtn.textContent = 'Working…';
-
   try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Push not supported');
-      return;
-    }
-
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { alert('Push not supported'); return; }
     const reg = await navigator.serviceWorker.ready;
-
     if (wasDisabled) {
       try {
         const existing = await reg.pushManager.getSubscription();
@@ -1937,38 +1753,30 @@ pushToggleBtn.addEventListener('click', async () => {
       await updatePushStatus();
       return;
     }
-
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       alert('Permission not granted. Enable in iPhone Settings → Notifications → Kharch.');
       await updatePushStatus();
       return;
     }
-
     let existing = await reg.pushManager.getSubscription();
     if (existing) await existing.unsubscribe();
-
     const keyRes = await fetch('/vapid-public-key');
     const keyData = await keyRes.json();
-
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
     });
-
     await fetch('/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sub)
     });
-
     await updatePushStatus();
   } catch (err) {
     alert('Error: ' + (err.message || 'unknown'));
     await updatePushStatus();
-  } finally {
-    pushToggleBtn.disabled = false;
-  }
+  } finally { pushToggleBtn.disabled = false; }
 });
 
 pushResetBtn.addEventListener('click', async () => {
@@ -1983,12 +1791,8 @@ pushResetBtn.addEventListener('click', async () => {
       if (sub) await sub.unsubscribe();
     }
     await updatePushStatus();
-  } catch (err) {
-    alert('Reset failed: ' + (err.message || 'unknown'));
-  } finally {
-    pushResetBtn.disabled = false;
-    pushResetBtn.textContent = 'Reset';
-  }
+  } catch (err) { alert('Reset failed: ' + (err.message || 'unknown')); }
+  finally { pushResetBtn.disabled = false; pushResetBtn.textContent = 'Reset'; }
 });
 
 document.getElementById('settingsBtn').addEventListener('click', () => {
@@ -2021,28 +1825,17 @@ async function loadTrash() {
         <button class="btn-restore" data-id="${t.id}">Restore</button>
       </div>
     `).join('');
-
     trashList.querySelectorAll('.btn-restore').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
         btn.disabled = true;
         btn.textContent = 'Restoring…';
         fetch(`/api/restore/${id}`, { method: 'POST' })
-          .then(res => {
-            if (!res.ok) throw new Error('failed');
-            loadTrash();
-            loadAll(currentDays, false);
-          })
-          .catch(() => {
-            alert('Failed to restore');
-            btn.disabled = false;
-            btn.textContent = 'Restore';
-          });
+          .then(res => { if (!res.ok) throw new Error('failed'); loadTrash(); loadAll(currentDays, false); })
+          .catch(() => { alert('Failed to restore'); btn.disabled = false; btn.textContent = 'Restore'; });
       });
     });
-  } catch (err) {
-    trashList.innerHTML = '<div class="empty">Could not load</div>';
-  }
+  } catch (err) { trashList.innerHTML = '<div class="empty">Could not load</div>'; }
 }
 
 document.getElementById('trashSettingsBtn').addEventListener('click', () => {
