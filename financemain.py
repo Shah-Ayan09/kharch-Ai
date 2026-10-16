@@ -294,17 +294,93 @@ def get_transaction(transaction_id):
         return jsonify({"error": "Not found"}), 404
     return jsonify(row)
 
+def cleanup_old_trash():
+    """Delete trash items older than 36 hours."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            DELETE FROM deleted_transactions
+            WHERE deleted_at < NOW() - INTERVAL '36 hours'
+        """)
+        count = cur.rowcount
+        conn.commit()
+        cur.close()
+        conn.close()
+        if count > 0:
+            print(f"🧹 Cleaned up {count} old trash items")
+    except Exception as e:
+        print(f"Cleanup error: {e}")
+
+
 @app.route("/api/transaction/<int:transaction_id>", methods=["DELETE"])
 def delete_transaction(transaction_id):
+    """Move a transaction to the trash."""
     conn = get_db_connection()
     cur = conn.cursor()
+    # Fetch the transaction first
+    cur.execute("SELECT id, date, time, amount, category FROM transactions WHERE id = %s", (transaction_id,))
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "Not found"}), 404
+    # Insert into trash
+    cur.execute("""
+        INSERT INTO deleted_transactions (original_id, date, time, amount, category, deleted_at)
+        VALUES (%s, %s, %s, %s, %s, NOW())
+    """, (row[0], row[1], row[2], row[3], row[4]))
+    # Remove from main table
     cur.execute("DELETE FROM transactions WHERE id = %s", (transaction_id,))
     conn.commit()
     cur.close()
     conn.close()
-    print(f"🗑️ Deleted transaction #{transaction_id}")
+    print(f"🗑️ Moved transaction #{transaction_id} to trash")
+    cleanup_old_trash()
     return jsonify({"success": True}), 200
 
+
+@app.route("/api/deleted")
+def list_deleted():
+    """Return all non-expired deleted transactions."""
+    cleanup_old_trash()
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("""
+        SELECT id, original_id, date, time, amount, category, deleted_at
+        FROM deleted_transactions
+        ORDER BY deleted_at DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/restore/<int:trash_id>", methods=["POST"])
+def restore_transaction(trash_id):
+    """Restore a deleted transaction."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT date, time, amount, category
+        FROM deleted_transactions WHERE id = %s
+    """, (trash_id,))
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "Not found"}), 404
+    cur.execute("""
+        INSERT INTO transactions (date, time, amount, category)
+        VALUES (%s, %s, %s, %s)
+    """, (row[0], row[1], row[2], row[3]))
+    cur.execute("DELETE FROM deleted_transactions WHERE id = %s", (trash_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    print(f"♻️ Restored transaction from trash")
+    return jsonify({"success": True}), 200
 # --- VIEW ---
 @app.route("/view")
 def view_transactions():

@@ -26,6 +26,9 @@
     --danger: #DC2626;
     --danger-fg: #FFFFFF;
     --success: #22C55E;
+    --row-bg: rgba(255, 255, 255, 0.02);
+    --row-border: rgba(255, 255, 255, 0.05);
+    --row-press: rgba(255, 255, 255, 0.04);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -122,7 +125,6 @@
     border-color: var(--border-strong);
   }
   .icon-btn:active { transform: scale(0.97); }
-  .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .icon-btn .badge {
     position: absolute;
@@ -148,6 +150,27 @@
     0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
     50% { transform: scale(1.3); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
   }
+
+  /* Inbox spinner (while loading first time) */
+  .icon-btn .spinner {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(11, 14, 20, 0.7);
+    border-radius: 10px;
+  }
+  .icon-btn.loading .spinner { display: flex; }
+  .spinner-ring {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: var(--fg-muted);
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ---------- FIXED TOP ---------- */
   .fixed-top {
@@ -224,6 +247,30 @@
     touch-action: none;
   }
 
+  /* Ring skeleton (shown while loading) */
+  .ring-skeleton {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ring-skeleton.show { display: flex; }
+  .ring-skeleton-ring {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, transparent 62%, rgba(255,255,255,0.04) 62%, rgba(255,255,255,0.04) 74%, transparent 74%);
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes skeletonPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
   .ring-center {
     position: absolute;
     inset: 0;
@@ -233,7 +280,7 @@
     justify-content: center;
     pointer-events: none;
     text-align: center;
-    z-index: 2;
+    z-index: 3;
   }
 
   .ring-label {
@@ -251,6 +298,14 @@
     letter-spacing: -0.03em;
     color: var(--fg);
     font-variant-numeric: tabular-nums;
+  }
+  .ring-amount.skeleton {
+    color: transparent;
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px;
+    width: 90px;
+    height: 30px;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
   }
 
   .tooltip {
@@ -329,15 +384,61 @@
     padding-bottom: 20px;
   }
 
+  /* ---------- SKELETON ROWS ---------- */
+  .skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--row-bg);
+    border: 1px solid var(--row-border);
+    border-radius: 16px;
+    animation: skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .skeleton-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+  }
+  .skeleton-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .skeleton-line {
+    height: 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .skeleton-line.short { width: 40%; }
+  .skeleton-line.medium { width: 70%; }
+  .skeleton-amount {
+    width: 60px;
+    height: 14px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+  }
+
+  /* ---------- SWIPE CONTAINER ---------- */
   .tx-swipe {
     position: relative;
     border-radius: 16px;
     overflow: hidden;
+    background: transparent;
   }
 
+  /* The hint slides in from behind. It's clipped and left-aligned so the
+     text is only revealed as the row moves. */
   .tx-swipe-hint {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -345,29 +446,32 @@
     font-weight: 600;
     letter-spacing: -0.005em;
     color: #FFFFFF;
-    background: #2A3242;
-    transition: background 120ms linear;
     pointer-events: none;
-    text-align: center;
     padding: 0 16px;
+    text-align: center;
+    /* Color starts neutral and changes when active */
+    background: #232B3A;
+    transition: background 120ms ease;
   }
-  .tx-swipe-hint.blue { background: var(--accent); }
-  .tx-swipe-hint.red  { background: var(--danger); }
+  .tx-swipe-hint.right { background: var(--accent); }
+  .tx-swipe-hint.left  { background: var(--danger); }
 
+  /* The row itself slides */
   .tx-row {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--row-bg);
+    border: 1px solid var(--row-border);
     border-radius: 16px;
     position: relative;
     z-index: 1;
-    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
     touch-action: pan-y;
     will-change: transform;
   }
+  .tx-row:active { background: var(--row-press); }
   .tx-row.no-anim { transition: none; }
 
   .tx-badge {
@@ -430,6 +534,19 @@
     flex-shrink: 0;
   }
 
+  /* Row removed (optimistic delete) */
+  .tx-swipe.removing {
+    animation: collapseRow 220ms ease forwards;
+  }
+  @keyframes collapseRow {
+    to {
+      opacity: 0;
+      transform: translateX(-100%);
+      height: 0;
+      margin: 0;
+    }
+  }
+
   .empty {
     padding: 40px 20px;
     text-align: center;
@@ -464,6 +581,11 @@
     max-height: 92vh;
     overflow-y: auto;
     box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
+    animation: sheetIn 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes sheetIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   .sheet-handle {
@@ -626,7 +748,6 @@
   }
   .btn-primary:hover { background: var(--accent-hover); }
   .btn-primary:active { transform: scale(0.99); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* ---------- SETTINGS SHEET ---------- */
   .settings-group {
@@ -651,6 +772,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     margin-bottom: 8px;
+    cursor: pointer;
   }
   .settings-item-body {
     flex: 1;
@@ -713,6 +835,11 @@
   }
   .btn-settings.subtle:hover {
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  .settings-chevron {
+    color: var(--fg-subtle);
+    flex-shrink: 0;
   }
 
   /* ---------- PENDING LIST ---------- */
@@ -785,6 +912,54 @@
   }
   .pending-x:active { transform: scale(0.9); }
 
+  /* ---------- TRASH SHEET ---------- */
+  .trash-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    margin-bottom: 8px;
+  }
+  .trash-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .trash-amt {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .trash-time {
+    font-size: 12px;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .trash-cat {
+    font-size: 12px;
+    color: var(--fg-subtle);
+  }
+  .btn-restore {
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--fg);
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+  .btn-restore:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
   @media (max-width: 400px) {
     .ring-wrap { width: 190px; height: 190px; }
     .ring-amount { font-size: 24px; }
@@ -809,6 +984,7 @@
           <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
         </svg>
         <span class="badge"></span>
+        <span class="spinner"><span class="spinner-ring"></span></span>
       </button>
 
       <button class="icon-btn" id="addBtn" aria-label="Add transaction">
@@ -829,18 +1005,21 @@
 
   <div class="fixed-top">
     <div class="filters" role="tablist">
-      <button class="filter-btn" data-days="7" role="tab">1W</button>
+      <button class="filter-btn active" data-days="7" role="tab">1W</button>
       <button class="filter-btn" data-days="14" role="tab">2W</button>
-      <button class="filter-btn active" data-days="30" role="tab">4W</button>
+      <button class="filter-btn" data-days="30" role="tab">4W</button>
       <button class="filter-btn" data-days="90" role="tab">3M</button>
     </div>
 
     <section class="ring-section">
       <div class="ring-wrap">
+        <div class="ring-skeleton show" id="ringSkeleton">
+          <div class="ring-skeleton-ring"></div>
+        </div>
         <canvas id="spendingChart"></canvas>
         <div class="ring-center">
           <div class="ring-label">Total spent</div>
-          <div class="ring-amount" id="totalAmount">Rs 0</div>
+          <div class="ring-amount skeleton" id="totalAmount">Rs 0</div>
         </div>
       </div>
       <div class="tooltip" id="tooltip">
@@ -855,12 +1034,12 @@
   <div class="tx-section">
     <div class="section-head">
       <span class="section-title">Transactions</span>
-      <span class="section-meta" id="txCount">0</span>
+      <span class="section-meta" id="txCount">—</span>
     </div>
 
     <div class="tx-scroll">
       <div class="tx-list" id="transactionList">
-        <div class="empty">Loading…</div>
+        <!-- Skeletons injected by JS -->
       </div>
     </div>
   </div>
@@ -940,7 +1119,6 @@
 
     <div class="sheet-actions">
       <button class="btn-secondary" id="moveCancel">Cancel</button>
-      <button class="btn-primary" id="moveSave">Change category</button>
     </div>
   </div>
 </div>
@@ -955,7 +1133,7 @@
     </div>
 
     <div class="pending-list" id="pendingList">
-      <div class="empty">Loading…</div>
+      <!-- Skeletons injected by JS -->
     </div>
   </div>
 </div>
@@ -972,7 +1150,7 @@
     <div class="settings-group">
       <div class="settings-group-label">Notifications</div>
 
-      <div class="settings-item">
+      <div class="settings-item" style="cursor: default;">
         <div class="settings-item-body">
           <div class="settings-item-title">Push notifications</div>
           <div class="settings-status">
@@ -983,7 +1161,7 @@
         <button class="btn-settings" id="pushToggleBtn">Enable</button>
       </div>
 
-      <div class="settings-item">
+      <div class="settings-item" style="cursor: default;">
         <div class="settings-item-body">
           <div class="settings-item-title">Reset subscription</div>
           <div class="settings-item-desc">Use this if notifications stop arriving</div>
@@ -993,8 +1171,23 @@
     </div>
 
     <div class="settings-group">
+      <div class="settings-group-label">Deleted items</div>
+      <div class="settings-item" id="trashSettingsBtn">
+        <div class="settings-item-body">
+          <div class="settings-item-title">Trash</div>
+          <div class="settings-item-desc">Recover deleted transactions (auto-clears after 36 hours)</div>
+        </div>
+        <span class="settings-chevron">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="settings-group">
       <div class="settings-group-label">About</div>
-      <div class="settings-item">
+      <div class="settings-item" style="cursor: default;">
         <div class="settings-item-body">
           <div class="settings-item-title">Kharch AI</div>
           <div class="settings-item-desc">Version 2.0</div>
@@ -1004,10 +1197,25 @@
   </div>
 </div>
 
+<!-- Trash Sheet -->
+<div class="overlay" id="trashOverlay">
+  <div class="sheet" role="dialog">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-title">Trash</span>
+      <button class="sheet-close" id="trashClose" aria-label="Close">×</button>
+    </div>
+    <div id="trashList">
+      <!-- Items injected by JS -->
+    </div>
+  </div>
+</div>
+
 <script>
 const COLORS = ['#F97316', '#22C55E', '#14B8A6', '#A855F7', '#EC4899', '#F59E0B', '#64748B', '#3B82F6'];
 let chart = null;
-let currentDays = 30;
+let currentDays = 7;
+let pendingCount = 0;
 
 const CAT_ICON = {
   Food:          '<svg viewBox="0 0 24 24"><path d="M4 3v7a3 3 0 0 0 3 3v8"/><path d="M7 3v7"/><path d="M10 3v7"/><path d="M17 3c-1.5 2-2 4-2 7 0 2 1 3 2 3v8"/></svg>',
@@ -1022,12 +1230,8 @@ const CAT_ICON = {
 };
 
 /* ---------- SERVICE WORKER ---------- */
-let swRegistration = null;
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js').then(r => {
-    swRegistration = r;
-    console.log('SW registered');
-  }).catch(e => console.log(e));
+  navigator.serviceWorker.register('/service-worker.js').catch(e => console.log(e));
 }
 
 /* ---------- HELPERS ---------- */
@@ -1092,10 +1296,16 @@ function toggleTooltip(index) {
 }
 
 async function loadChart(days) {
+  const ringSkeleton = document.getElementById('ringSkeleton');
+  const totalEl = document.getElementById('totalAmount');
+
   try {
     const res = await fetch(`/api/spending?days=${days}`);
     const data = await res.json();
-    document.getElementById('totalAmount').textContent = fmtRs(data.total);
+    totalEl.classList.remove('skeleton');
+    totalEl.textContent = fmtRs(data.total);
+    ringSkeleton.classList.remove('show');
+
     const ctx = document.getElementById('spendingChart').getContext('2d');
     if (chart) {
       chart.data.labels = data.labels;
@@ -1129,40 +1339,70 @@ async function loadChart(days) {
     }
   } catch (err) {
     console.error(err);
+    totalEl.classList.remove('skeleton');
+    totalEl.textContent = 'Error';
+    ringSkeleton.classList.remove('show');
   }
+}
+
+/* ---------- SKELETON BUILDERS ---------- */
+function skeletonRow() {
+  return `
+    <div class="skeleton-row">
+      <div class="skeleton-badge"></div>
+      <div class="skeleton-info">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line medium"></div>
+      </div>
+      <div class="skeleton-amount"></div>
+    </div>
+  `;
+}
+function renderSkeletons(count = 4) {
+  return Array(count).fill(skeletonRow()).join('');
 }
 
 /* ---------- TRANSACTIONS ---------- */
 let currentTx = [];
 
-async function loadTransactions(days) {
+function renderTxRow(t) {
+  const cat = t.category || 'Uncategorized';
+  return `
+    <div class="tx-swipe" data-id="${t.id}">
+      <div class="tx-swipe-hint" data-hint></div>
+      <div class="tx-row" data-id="${t.id}">
+        <div class="tx-badge" data-cat="${cat}">${iconFor(cat)}</div>
+        <div class="tx-info">
+          <div class="tx-cat">${cat}</div>
+          <div class="tx-time">${fmtWhen(t.date, t.time)}</div>
+        </div>
+        <div class="tx-amt">${fmtRs(t.amount)}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function loadTransactions(days, showSkeleton = true) {
   const list = document.getElementById('transactionList');
+
+  if (showSkeleton) {
+    list.innerHTML = renderSkeletons(4);
+  }
+
   try {
     const res = await fetch(`/api/transactions?days=${days}`);
     const tx = await res.json();
     currentTx = tx;
-    document.getElementById('txCount').textContent = tx.length + (tx.length === 1 ? ' entry' : ' entries');
+
+    document.getElementById('txCount').textContent =
+      tx.length + (tx.length === 1 ? ' entry' : ' entries');
+
     if (!tx || tx.length === 0) {
       list.innerHTML = '<div class="empty">No transactions yet</div>';
       return;
     }
-    list.innerHTML = tx.map(t => {
-      const cat = t.category || 'Uncategorized';
-      return `
-        <div class="tx-swipe" data-id="${t.id}">
-          <div class="tx-swipe-hint" data-hint>—</div>
-          <div class="tx-row" data-id="${t.id}">
-            <div class="tx-badge" data-cat="${cat}">${iconFor(cat)}</div>
-            <div class="tx-info">
-              <div class="tx-cat">${cat}</div>
-              <div class="tx-time">${fmtWhen(t.date, t.time)}</div>
-            </div>
-            <div class="tx-amt">${fmtRs(t.amount)}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
 
+    list.innerHTML = tx.map(renderTxRow).join('');
     list.querySelectorAll('.tx-swipe').forEach(swipe => {
       attachSwipe(swipe);
     });
@@ -1174,24 +1414,27 @@ async function loadTransactions(days) {
 
 /* ---------- SWIPE ---------- */
 let openSwipe = null;
+const SWIPE_THRESHOLD_RATIO = 0.35; // 35% for categorize
+const SWIPE_DELETE_RATIO = 0.40;    // 40% for delete
 
 function attachSwipe(swipeEl) {
   const rowEl = swipeEl.querySelector('.tx-row');
   const hintEl = swipeEl.querySelector('[data-hint]');
   const txId = swipeEl.dataset.id;
 
-  let startX = 0, startY = 0, currentX = 0;
+  let startX = 0, startY = 0;
+  let currentDx = 0;
   let dragging = false;
   let lockedDirection = null;
-  let passedThreshold1 = false;
-  let passedThreshold2 = false;
+  let passedRight = false;
+  let passedLeft = false;
 
-  const threshold1 = () => window.innerWidth * 0.33;
-  const threshold2 = () => window.innerWidth * 0.66;
+  const rightThreshold = () => window.innerWidth * SWIPE_THRESHOLD_RATIO;
+  const leftThreshold = () => window.innerWidth * SWIPE_DELETE_RATIO;
 
   const resetHint = () => {
-    hintEl.textContent = 'Swipe to change or delete';
-    hintEl.classList.remove('blue', 'red');
+    hintEl.textContent = '';
+    hintEl.classList.remove('right', 'left');
   };
 
   const resetRow = (animate = true) => {
@@ -1202,9 +1445,9 @@ function attachSwipe(swipeEl) {
       rowEl.classList.remove('no-anim');
     }
     resetHint();
-    currentX = 0;
-    passedThreshold1 = false;
-    passedThreshold2 = false;
+    currentDx = 0;
+    passedRight = false;
+    passedLeft = false;
   };
 
   const start = (e) => {
@@ -1233,48 +1476,65 @@ function attachSwipe(swipeEl) {
     if (e.cancelable) e.preventDefault();
 
     dragging = true;
-    currentX = Math.max(0, dx);
+    currentDx = dx;
+
     const cap = window.innerWidth;
-    currentX = Math.min(currentX, cap);
+    const clamped = Math.max(-cap, Math.min(cap, currentDx));
 
     rowEl.classList.add('no-anim');
-    rowEl.style.transform = `translateX(${currentX}px)`;
+    rowEl.style.transform = `translateX(${clamped}px)`;
     rowEl.classList.remove('no-anim');
 
-    if (!passedThreshold1 && currentX >= threshold1()) {
-      passedThreshold1 = true;
-      haptic();
+    // RIGHT swipe = categorize
+    if (clamped > 0) {
+      hintEl.style.textAlign = 'right';
+      hintEl.style.paddingRight = '20px';
+      hintEl.style.paddingLeft = '0';
+      if (clamped >= rightThreshold()) {
+        if (!passedRight) { haptic(); passedRight = true; }
+        hintEl.textContent = 'Release to categorize';
+        hintEl.classList.add('right');
+        hintEl.classList.remove('left');
+      } else {
+        passedRight = false;
+        hintEl.textContent = 'Swipe right to categorize';
+        hintEl.classList.remove('right', 'left');
+      }
     }
-    if (currentX < threshold1()) passedThreshold1 = false;
-
-    if (!passedThreshold2 && currentX >= threshold2()) {
-      passedThreshold2 = true;
-      haptic();
-    }
-    if (currentX < threshold2()) passedThreshold2 = false;
-
-    if (currentX >= threshold2()) {
-      hintEl.textContent = 'Swipe completely to delete transaction';
-      hintEl.classList.add('red');
-      hintEl.classList.remove('blue');
-    } else if (currentX >= threshold1()) {
-      hintEl.textContent = 'Release to change category';
-      hintEl.classList.add('blue');
-      hintEl.classList.remove('red');
+    // LEFT swipe = delete
+    else if (clamped < 0) {
+      hintEl.style.textAlign = 'left';
+      hintEl.style.paddingLeft = '20px';
+      hintEl.style.paddingRight = '0';
+      if (Math.abs(clamped) >= leftThreshold()) {
+        if (!passedLeft) { haptic(); passedLeft = true; }
+        hintEl.textContent = 'Release to delete';
+        hintEl.classList.add('left');
+        hintEl.classList.remove('right');
+      } else {
+        passedLeft = false;
+        hintEl.textContent = 'Swipe left to delete';
+        hintEl.classList.remove('right', 'left');
+      }
     } else {
-      hintEl.textContent = 'Swipe to change or delete';
-      hintEl.classList.remove('blue', 'red');
+      resetHint();
     }
   };
 
   const end = () => {
+    const dx = currentDx;
     if (!dragging) { resetRow(); return; }
-    const was2 = currentX >= threshold2();
-    const was1 = currentX >= threshold1();
+    const wantRight = dx >= rightThreshold();
+    const wantLeft = Math.abs(dx) >= leftThreshold();
+
     resetRow(true);
     openSwipe = null;
-    if (was2) setTimeout(() => deleteTransaction(txId), 220);
-    else if (was1) setTimeout(() => openMoveSheet(txId), 220);
+
+    if (wantRight) {
+      setTimeout(() => openMoveSheet(txId), 220);
+    } else if (wantLeft) {
+      setTimeout(() => confirmDeleteSwipe(txId), 220);
+    }
   };
 
   rowEl.addEventListener('touchstart', start, { passive: true });
@@ -1289,20 +1549,20 @@ function attachSwipe(swipeEl) {
   swipeEl.addEventListener('swipe-reset', () => resetRow(true));
 }
 
-/* ---------- DELETE ---------- */
-async function deleteTransaction(id) {
+function confirmDeleteSwipe(id) {
   if (!confirm('Remove this transaction?')) return;
-  try {
-    const res = await fetch(`/api/transaction/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      await loadAll(currentDays);
-      await refreshPending();
-    } else {
-      alert('Failed to remove');
-    }
-  } catch (err) {
+  const swipe = document.querySelector(`.tx-swipe[data-id="${id}"]`);
+  if (swipe) swipe.classList.add('removing');
+  fetch(`/api/transaction/${id}`, { method: 'DELETE' }).catch(err => {
     alert('Failed to remove');
-  }
+    if (swipe) swipe.classList.remove('removing');
+    loadAll(currentDays);
+  });
+  setTimeout(() => {
+    if (swipe) swipe.remove();
+    loadChart(currentDays);
+    refreshPending();
+  }, 240);
 }
 
 /* ---------- MOVE SHEET ---------- */
@@ -1331,45 +1591,56 @@ moveOverlay.addEventListener('click', (e) => { if (e.target === moveOverlay) clo
 
 document.querySelectorAll('#moveCatChips .cat-chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('#moveCatChips .cat-chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
+    const newCat = chip.dataset.cat;
+    const id = moveTxId;
+    if (!id) return;
+
+    // Optimistic: update the row instantly
+    const tx = currentTx.find(t => String(t.id) === String(id));
+    if (tx) tx.category = newCat;
+    const row = document.querySelector(`.tx-swipe[data-id="${id}"]`);
+    if (row) {
+      const badge = row.querySelector('.tx-badge');
+      const catEl = row.querySelector('.tx-cat');
+      badge.dataset.cat = newCat;
+      badge.innerHTML = iconFor(newCat);
+      catEl.textContent = newCat;
+    }
+
+    // Close the sheet instantly
+    closeMoveSheet();
+
+    // Fire the request in the background
+    fetch('/api/update_category', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: id, category: newCat })
+    }).then(res => {
+      if (!res.ok) throw new Error('failed');
+      // Background: refresh chart only
+      loadChart(currentDays);
+      refreshPending();
+    }).catch(() => {
+      alert('Failed to save category change');
+      loadAll(currentDays, false);
+    });
   });
 });
 
-document.getElementById('moveSave').addEventListener('click', async () => {
-  const sel = document.querySelector('#moveCatChips .cat-chip.selected');
-  if (!sel || !moveTxId) return;
-  const btn = document.getElementById('moveSave');
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
-  try {
-    await fetch('/api/update_category', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transaction_id: moveTxId, category: sel.dataset.cat })
-    });
-    closeMoveSheet();
-    await loadAll(currentDays);
-    await refreshPending();
-  } catch (err) {
-    alert('Failed to change');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Change category';
-  }
-});
-
 /* ---------- LOAD ---------- */
-async function loadAll(days) {
+async function loadAll(days, showSkeleton = true) {
   currentDays = days;
-  await Promise.all([loadChart(days), loadTransactions(days)]);
+  await Promise.all([
+    loadChart(days),
+    loadTransactions(days, showSkeleton)
+  ]);
 }
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    loadAll(parseInt(btn.dataset.days, 10));
+    loadAll(parseInt(btn.dataset.days, 10), false);
   });
 });
 
@@ -1405,9 +1676,8 @@ document.getElementById('sheetSave').addEventListener('click', async () => {
   const date = document.getElementById('mDate').value;
   const time = document.getElementById('mTime').value;
   if (!amount || !date || !time) { alert('Please fill in amount, date and time.'); return; }
-  const btn = document.getElementById('sheetSave');
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
+
+  closeSheet();
   try {
     const res = await fetch('/api/add_transaction', {
       method: 'POST',
@@ -1416,16 +1686,12 @@ document.getElementById('sheetSave').addEventListener('click', async () => {
     });
     const data = await res.json();
     if (data.success) {
-      closeSheet();
-      await loadAll(currentDays);
+      await loadAll(currentDays, false);
     } else {
       alert('Error: ' + (data.error || 'Unknown'));
     }
   } catch (err) {
     alert('Failed to save.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save';
   }
 });
 
@@ -1437,6 +1703,7 @@ async function refreshPending() {
   try {
     const res = await fetch('/api/pending');
     const pending = await res.json();
+    pendingCount = pending.length;
     if (pending && pending.length > 0) {
       const wasHidden = !inboxBtn.classList.contains('has-pending');
       inboxBtn.classList.add('has-pending');
@@ -1455,7 +1722,7 @@ async function refreshPending() {
 
 async function loadPendingList() {
   const list = document.getElementById('pendingList');
-  list.innerHTML = '<div class="empty">Loading…</div>';
+  list.innerHTML = renderSkeletons(3);
   try {
     const res = await fetch('/api/pending');
     const pending = await res.json();
@@ -1464,7 +1731,7 @@ async function loadPendingList() {
       return;
     }
     list.innerHTML = pending.map(p => `
-      <div class="pending-row">
+      <div class="pending-row" data-id="${p.id}">
         <a class="pending-main" href="/categorize?id=${p.id}">
           <div class="pending-amt">Rs ${Number(p.amount).toLocaleString()}</div>
           <div class="pending-info">
@@ -1477,23 +1744,25 @@ async function loadPendingList() {
     `).join('');
 
     list.querySelectorAll('.pending-x').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         const id = btn.dataset.id;
         if (!confirm('Remove this transaction?')) return;
-        try {
-          const res = await fetch(`/api/transaction/${id}`, { method: 'DELETE' });
-          if (res.ok) {
-            await loadPendingList();
-            await refreshPending();
-            await loadAll(currentDays);
-          } else {
+        const row = btn.closest('.pending-row');
+        if (row) row.style.opacity = '0.4';
+
+        fetch(`/api/transaction/${id}`, { method: 'DELETE' })
+          .then(res => {
+            if (!res.ok) throw new Error('failed');
+            if (row) row.remove();
+            refreshPending();
+            loadChart(currentDays);
+          })
+          .catch(() => {
             alert('Failed to remove');
-          }
-        } catch (err) {
-          alert('Failed to remove');
-        }
+            if (row) row.style.opacity = '1';
+          });
       });
     });
   } catch (err) {
@@ -1524,19 +1793,9 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
-function withTimeout(promise, ms, label) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(label + ' timed out')), ms)
-    )
-  ]);
-}
-
 async function updatePushStatus() {
   pushStatusDot.className = 'status-dot';
   pushStatusText.textContent = 'Checking…';
-  pushToggleBtn.disabled = false;
   pushToggleBtn.textContent = 'Enable';
   pushToggleBtn.classList.remove('danger');
 
@@ -1546,10 +1805,8 @@ async function updatePushStatus() {
       pushStatusText.textContent = 'Not supported';
       return;
     }
-
-    const reg = await withTimeout(navigator.serviceWorker.ready, 8000, 'Service worker');
-    const sub = await withTimeout(reg.pushManager.getSubscription(), 8000, 'Subscription');
-
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
     if (sub) {
       pushStatusDot.className = 'status-dot on';
       pushStatusText.textContent = 'Subscribed';
@@ -1558,13 +1815,10 @@ async function updatePushStatus() {
     } else {
       pushStatusDot.className = 'status-dot off';
       pushStatusText.textContent = 'Not subscribed';
-      pushToggleBtn.textContent = 'Enable';
     }
   } catch (err) {
-    console.error(err);
     pushStatusDot.className = 'status-dot off';
     pushStatusText.textContent = 'Not subscribed';
-    pushToggleBtn.textContent = 'Enable';
   }
 }
 
@@ -1573,94 +1827,52 @@ pushToggleBtn.addEventListener('click', async () => {
   const wasDisabled = pushToggleBtn.classList.contains('danger');
   pushToggleBtn.textContent = 'Working…';
 
-  // Diagnostic step log
-  let step = 'starting';
-  pushStatusText.textContent = step;
-
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Push notifications are not supported on this device.');
-      pushToggleBtn.textContent = 'Enable';
+      alert('Push not supported');
       return;
     }
 
-    step = 'checking subscription';
-    pushStatusText.textContent = step;
     const reg = await navigator.serviceWorker.ready;
-    let existing = await reg.pushManager.getSubscription();
 
     if (wasDisabled) {
-      // Disable path
-      step = 'unsubscribing';
-      pushStatusText.textContent = step;
-      if (existing) await existing.unsubscribe();
-      await fetch('/force-clear-subscriptions').catch(() => {});
-      pushStatusDot.className = 'status-dot off';
-      pushStatusText.textContent = 'Disabled';
-      pushToggleBtn.textContent = 'Enable';
-      pushToggleBtn.classList.remove('danger');
-      return;
-    }
-
-    // Enable path
-    step = 'requesting permission';
-    pushStatusText.textContent = step;
-    const permission = await Notification.requestPermission();
-    pushStatusText.textContent = 'permission: ' + permission;
-
-    if (permission !== 'granted') {
-      alert('Permission was not granted. Go to iPhone Settings → Notifications → Kharch and enable.');
-      pushToggleBtn.textContent = 'Enable';
-      return;
-    }
-
-    // If stale subscription exists, clear it first
-    if (existing) {
-      step = 'clearing stale subscription';
-      pushStatusText.textContent = step;
       try {
-        await existing.unsubscribe();
-      } catch (e) {
-        console.error('Stale unsubscribe failed:', e);
-      }
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) await existing.unsubscribe();
+      } catch (e) {}
+      await fetch('/force-clear-subscriptions').catch(() => {});
+      await updatePushStatus();
+      return;
     }
 
-    step = 'fetching vapid key';
-    pushStatusText.textContent = step;
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      alert('Permission not granted. Enable in iPhone Settings → Notifications → Kharch.');
+      await updatePushStatus();
+      return;
+    }
+
+    let existing = await reg.pushManager.getSubscription();
+    if (existing) await existing.unsubscribe();
+
     const keyRes = await fetch('/vapid-public-key');
     const keyData = await keyRes.json();
 
-    step = 'subscribing';
-    pushStatusText.textContent = step;
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
     });
 
-    step = 'saving to server';
-    pushStatusText.textContent = step;
-    const saveRes = await fetch('/subscribe', {
+    await fetch('/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sub)
     });
 
-    if (!saveRes.ok) {
-      pushStatusText.textContent = 'server error ' + saveRes.status;
-      alert('Server rejected subscription: ' + saveRes.status);
-      pushToggleBtn.textContent = 'Enable';
-      return;
-    }
-
-    pushStatusDot.className = 'status-dot on';
-    pushStatusText.textContent = 'Subscribed';
-    pushToggleBtn.textContent = 'Disable';
-    pushToggleBtn.classList.add('danger');
+    await updatePushStatus();
   } catch (err) {
-    console.error(err);
-    pushStatusText.textContent = 'failed at: ' + step;
-    alert('Error at "' + step + '": ' + (err.message || 'unknown'));
-    pushToggleBtn.textContent = 'Enable';
+    alert('Error: ' + (err.message || 'unknown'));
+    await updatePushStatus();
   } finally {
     pushToggleBtn.disabled = false;
   }
@@ -1670,18 +1882,13 @@ pushResetBtn.addEventListener('click', async () => {
   if (!confirm('Force reset push subscription on this device?')) return;
   pushResetBtn.disabled = true;
   pushResetBtn.textContent = 'Resetting…';
-
   try {
     await fetch('/force-clear-subscriptions').catch(() => {});
-
     const regs = await navigator.serviceWorker.getRegistrations();
     for (const reg of regs) {
       const sub = await reg.pushManager.getSubscription();
       if (sub) await sub.unsubscribe();
     }
-
-    pushStatusText.textContent = 'Not subscribed';
-    pushStatusDot.className = 'status-dot off';
     await updatePushStatus();
   } catch (err) {
     alert('Reset failed: ' + (err.message || 'unknown'));
@@ -1698,8 +1905,63 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
 document.getElementById('settingsClose').addEventListener('click', () => settingsOverlay.classList.remove('open'));
 settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('open'); });
 
+/* ---------- TRASH ---------- */
+const trashOverlay = document.getElementById('trashOverlay');
+const trashList = document.getElementById('trashList');
+
+async function loadTrash() {
+  trashList.innerHTML = renderSkeletons(3);
+  try {
+    const res = await fetch('/api/deleted');
+    const items = await res.json();
+    if (!items || items.length === 0) {
+      trashList.innerHTML = '<div class="empty">Trash is empty</div>';
+      return;
+    }
+    trashList.innerHTML = items.map(t => `
+      <div class="trash-row" data-id="${t.id}">
+        <div class="trash-info">
+          <div class="trash-amt">Rs ${Number(t.amount).toLocaleString()}</div>
+          <div class="trash-time">${fmtWhen(t.date, t.time)}</div>
+          <div class="trash-cat">${t.category || 'Uncategorized'}</div>
+        </div>
+        <button class="btn-restore" data-id="${t.id}">Restore</button>
+      </div>
+    `).join('');
+
+    trashList.querySelectorAll('.btn-restore').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        btn.disabled = true;
+        btn.textContent = 'Restoring…';
+        fetch(`/api/restore/${id}`, { method: 'POST' })
+          .then(res => {
+            if (!res.ok) throw new Error('failed');
+            loadTrash();
+            loadAll(currentDays, false);
+          })
+          .catch(() => {
+            alert('Failed to restore');
+            btn.disabled = false;
+            btn.textContent = 'Restore';
+          });
+      });
+    });
+  } catch (err) {
+    trashList.innerHTML = '<div class="empty">Could not load</div>';
+  }
+}
+
+document.getElementById('trashSettingsBtn').addEventListener('click', () => {
+  trashOverlay.classList.add('open');
+  loadTrash();
+});
+document.getElementById('trashClose').addEventListener('click', () => trashOverlay.classList.remove('open'));
+trashOverlay.addEventListener('click', (e) => { if (e.target === trashOverlay) trashOverlay.classList.remove('open'); });
+
 /* ---------- INIT ---------- */
-loadAll(30);
+document.getElementById('transactionList').innerHTML = renderSkeletons(4);
+loadAll(7, true);
 refreshPending();
 setInterval(refreshPending, 30000);
 updatePushStatus();
