@@ -21,7 +21,6 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 def initialize_database():
-    """Create tables if they don't exist."""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -35,10 +34,14 @@ def initialize_database():
     )
     ''')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS push_subscriptions (
+    CREATE TABLE IF NOT EXISTS deleted_transactions (
         id SERIAL PRIMARY KEY,
-        subscription TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        original_id INTEGER,
+        date TEXT NOT NULL,
+        time TEXT NOT NULL,
+        amount REAL NOT NULL,
+        category TEXT,
+        deleted_at TIMESTAMP DEFAULT NOW()
     )
     ''')
     conn.commit()
